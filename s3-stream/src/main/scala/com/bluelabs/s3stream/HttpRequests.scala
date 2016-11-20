@@ -6,7 +6,7 @@ import akka.http.scaladsl.marshallers.xml.ScalaXmlSupport._
 import akka.http.scaladsl.marshalling.Marshal
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.Uri.Query
-import akka.http.scaladsl.model.headers.Host
+import akka.http.scaladsl.model.headers.{Host,RawHeader}
 import akka.util.ByteString
 
 object HttpRequests {
@@ -17,10 +17,12 @@ object HttpRequests {
       .withUri(uriFn(requestUri(s3Location)))
   }
 
-  def initiateMultipartUploadRequest(s3Location: S3Location): HttpRequest = {
-    s3Request(s3Location, HttpMethods.POST, _.withQuery(Query("uploads")))
+  def initiateMultipartUploadRequest(s3Location: S3Location,serverSideEncryption: Boolean): HttpRequest = {
+    val r = s3Request(s3Location, HttpMethods.POST, _.withQuery(Query("uploads")))
+    if (!serverSideEncryption) r
+    else r.withHeaders(RawHeader("x-amz-server-side​-encryption","AES256"))
   }
-  
+
   def getRequest(s3Location: S3Location): HttpRequest = {
     s3Request(s3Location)
   }

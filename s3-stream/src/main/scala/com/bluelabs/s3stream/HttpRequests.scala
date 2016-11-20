@@ -23,6 +23,11 @@ object HttpRequests {
     else r.withHeaders(RawHeader("x-amz-server-side​-encryption","AES256"))
   }
 
+  def abortMultipartUploadRequest(s3Location: S3Location,uploadId: String): HttpRequest = {
+     s3Request(s3Location, HttpMethods.DELETE, _.withQuery(Query("uploadId"->uploadId)))
+
+  }
+
   def getRequest(s3Location: S3Location): HttpRequest = {
     s3Request(s3Location)
   }

@@ -20,7 +20,7 @@ object HttpRequests {
   def initiateMultipartUploadRequest(s3Location: S3Location,serverSideEncryption: Boolean): HttpRequest = {
     val r = s3Request(s3Location, HttpMethods.POST, _.withQuery(Query("uploads")))
     if (!serverSideEncryption) r
-    else r.withHeaders(RawHeader("x-amz-server-side​-encryption","AES256"))
+    else r.withHeaders(r.headers :+ RawHeader("x-amz-server-side-encryption","AES256"))
   }
 
   def abortMultipartUploadRequest(s3Location: S3Location,uploadId: String): HttpRequest = {

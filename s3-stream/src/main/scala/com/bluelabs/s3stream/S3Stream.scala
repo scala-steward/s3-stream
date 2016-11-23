@@ -49,7 +49,20 @@ class S3Stream(credentials: AWSCredentials, region: String = "us-east-1")(implic
   }
 
   def getMetadata(s3Location: S3Location): Future[HttpResponse] =
-    signAndGetResponse(HttpRequests.headRequest(s3Location))          
+    signAndGetResponse(HttpRequests.headRequest(s3Location))
+
+
+  def upoadData(s3Location:S3Location, payload: ByteString, serverSideEncryption: Boolean) : Future[HttpResponse] = {
+    import mat.executionContext
+    val req = HttpRequests.putRequest(s3Location,serverSideEncryption,payload)
+
+    for {
+      signedReq <- Signer.signedRequest(req, signingKey)
+      response <- Http().singleRequest(signedReq)
+    } yield {
+      response
+    }
+  }
 
 
   /**

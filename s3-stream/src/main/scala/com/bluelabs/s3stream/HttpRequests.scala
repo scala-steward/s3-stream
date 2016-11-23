@@ -34,7 +34,10 @@ object HttpRequests {
 
   def headRequest(s3Location:S3Location): HttpRequest =
     s3Request(s3Location, HttpMethods.HEAD)
-  
+
+  def putRequest(s3Location:S3Location, serverSideEncryption: Boolean, payload: ByteString): HttpRequest =
+      s3Request(s3Location, HttpMethods.PUT).withEntity(payload)
+
 
   def uploadPartRequest(upload: MultipartUpload, partNumber: Int, payload: ByteString): HttpRequest = {
     s3Request(upload.s3Location,

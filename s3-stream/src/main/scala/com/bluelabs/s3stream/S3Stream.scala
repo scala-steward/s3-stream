@@ -48,6 +48,10 @@ class S3Stream(credentials: AWSCredentials, region: String = "us-east-1")(implic
           .flatMapConcat(identity)
   }
 
+  def getMetadata(s3Location: S3Location): Future[HttpResponse] =
+    signAndGetResponse(HttpRequests.headRequest(s3Location))          
+
+
   /**
     * Uploades a stream of ByteStrings to a specified location as a multipart upload.
     *
@@ -160,6 +164,15 @@ class S3Stream(credentials: AWSCredentials, region: String = "us-east-1")(implic
         }
       }
     }
+  }
+
+  private def signAndGetResponse(request: HttpRequest): Future[HttpResponse] = {
+    import mat.executionContext
+    for (
+        req <- Signer.signedRequest(request, signingKey);
+        res <- Http().singleRequest(req)
+
+    ) yield res
   }
 
   private def signAndGetAs[T](request: HttpRequest)(implicit um: Unmarshaller[ResponseEntity, T]): Future[T] = {

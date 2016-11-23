@@ -3,7 +3,7 @@ import sbt.Keys._
 
 lazy val commonSettings = Seq(
   organization := "io.github.pityka",
-  version := "0.0.4-fork2-SNAPSHOT",
+  version := "0.0.4-fork3-SNAPSHOT",
   scalaVersion := "2.11.8",
   scalacOptions ++= Seq("-unchecked", "-deprecation", "-feature"),
   licenses += ("MIT", url("http://opensource.org/licenses/MIT"))

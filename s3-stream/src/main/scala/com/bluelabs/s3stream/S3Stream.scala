@@ -36,6 +36,11 @@ case class FailedUploadPart(multipartUpload: MultipartUpload, index: Int, except
 case class FailedUpload(reasons: Seq[Throwable]) extends Exception
 case class CompleteMultipartUploadResult(location: Uri, bucket: String, key: String, etag: String)
 
+case class ObjectMetadata(response:HttpResponse) {
+  def contentLength = response.header[headers.`Content-Length`].map(_.length)
+  def eTag = response.header[headers.`ETag`].map(_.value)
+}
+
 class S3Stream(credentials: AWSCredentials, region: String = "us-east-1")(implicit system: ActorSystem, mat: Materializer) {
   import Marshalling._
 
@@ -48,8 +53,8 @@ class S3Stream(credentials: AWSCredentials, region: String = "us-east-1")(implic
           .flatMapConcat(identity)
   }
 
-  def getMetadata(s3Location: S3Location): Future[HttpResponse] =
-    signAndGetResponse(HttpRequests.headRequest(s3Location))
+  def getMetadata(s3Location: S3Location): Future[ObjectMetadata] =
+    signAndGetResponse(HttpRequests.headRequest(s3Location)).map(h => ObjectMetadata(h))(mat.executionContext)
 
 
   def upoadData(s3Location:S3Location, payload: ByteString, serverSideEncryption: Boolean) : Future[HttpResponse] = {

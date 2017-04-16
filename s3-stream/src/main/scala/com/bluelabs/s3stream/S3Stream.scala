@@ -54,7 +54,7 @@ class S3Stream(credentials: AWSCredentials, region: String = "us-east-1")(implic
   }
 
   def getMetadata(s3Location: S3Location): Future[ObjectMetadata] =
-    signAndGetResponse(HttpRequests.headRequest(s3Location)).map(h => ObjectMetadata(h))(mat.executionContext)
+    signAndGetResponse(HttpRequests.headRequest(s3Location)).map(h => {h.discardEntityBytes();ObjectMetadata(h)})(mat.executionContext)
 
 
   def upoadData(s3Location:S3Location, payload: ByteString, serverSideEncryption: Boolean) : Future[HttpResponse] = {

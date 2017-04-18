@@ -7,16 +7,23 @@ import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 import javax.xml.bind.DatatypeConverter
 
-case class CredentialScope(date: LocalDate, awsRegion: String, awsService: String){
+case class CredentialScope(date: LocalDate,
+                           awsRegion: String,
+                           awsService: String) {
   val dateFormat = new SimpleDateFormat("yyyy-MM-dd")
-  lazy val formattedDate: String = date.format(DateTimeFormatter.BASIC_ISO_DATE)
+  lazy val formattedDate: String =
+    date.format(DateTimeFormatter.BASIC_ISO_DATE)
 
   def scopeString = s"$formattedDate/$awsRegion/$awsService/aws4_request"
 }
 
-case class SigningKey(credentials: AWSCredentials, scope: CredentialScope, algorithm: String = "HmacSHA256") {
+case class SigningKey(credentials: AWSCredentials,
+                      scope: CredentialScope,
+                      algorithm: String = "HmacSHA256") {
 
-  val rawKey = new SecretKeySpec(s"AWS4${credentials.secretAccessKey}".getBytes, algorithm)
+  val rawKey = new SecretKeySpec(
+    s"AWS4${credentials.secretAccessKey}".getBytes,
+    algorithm)
 
   def signature(message: Array[Byte]): Array[Byte] = {
     signWithKey(key, message)
@@ -26,7 +33,8 @@ case class SigningKey(credentials: AWSCredentials, scope: CredentialScope, algor
     Utils.encodeHex(signature(message))
   }
 
-  def credentialString: String = s"${credentials.accessKeyId}/${scope.scopeString}"
+  def credentialString: String =
+    s"${credentials.accessKeyId}/${scope.scopeString}"
 
   lazy val key: SecretKeySpec =
     wrapSignature(dateRegionServiceKey, "aws4_request".getBytes)
@@ -40,11 +48,13 @@ case class SigningKey(credentials: AWSCredentials, scope: CredentialScope, algor
   lazy val dateKey: SecretKeySpec =
     wrapSignature(rawKey, scope.formattedDate.getBytes)
 
-  private def wrapSignature(signature: SecretKeySpec, message: Array[Byte]): SecretKeySpec = {
+  private def wrapSignature(signature: SecretKeySpec,
+                            message: Array[Byte]): SecretKeySpec = {
     new SecretKeySpec(signWithKey(signature, message), algorithm)
   }
 
-  private def signWithKey(key: SecretKeySpec, message: Array[Byte]): Array[Byte] = {
+  private def signWithKey(key: SecretKeySpec,
+                          message: Array[Byte]): Array[Byte] = {
     val mac = Mac.getInstance(algorithm)
     mac.init(key)
     mac.doFinal(message)

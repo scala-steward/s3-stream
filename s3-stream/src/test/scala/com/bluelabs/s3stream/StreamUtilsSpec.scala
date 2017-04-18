@@ -13,10 +13,15 @@ import org.scalatest.{FlatSpecLike, Matchers}
 
 import scala.concurrent.Future
 
-class StreamUtilsSpec(_system: ActorSystem) extends TestKit(_system) with FlatSpecLike with Matchers with ScalaFutures {
+class StreamUtilsSpec(_system: ActorSystem)
+    extends TestKit(_system)
+    with FlatSpecLike
+    with Matchers
+    with ScalaFutures {
   def this() = this(ActorSystem("StreamUtilsSpec"))
 
-  implicit val materializer = ActorMaterializer(ActorMaterializerSettings(system).withDebugLogging(true))
+  implicit val materializer = ActorMaterializer(
+    ActorMaterializerSettings(system).withDebugLogging(true))
 
   "counter" should "increment starting from 0" in {
     val testSource = StreamUtils.counter()

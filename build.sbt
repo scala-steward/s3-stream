@@ -17,11 +17,19 @@ lazy val commonSettings = Seq(
   scalacOptions ++= Seq("-unchecked", "-deprecation"),
   licenses += ("Apache-2.0", url("https://opensource.org/licenses/Apache-2.0")),
   pomExtra in Global := {
+      <url>https://pityka.github.io/s3-stream/</url>
       <scm>
         <connection>scm:git:github.com/pityka/s3-stream</connection>
         <developerConnection>scm:git:git@github.com:pityka/s3-stream</developerConnection>
         <url>github.com/pityka/s3-stream</url>
       </scm>
+      <developers>
+        <developer>
+          <id>pityka</id>
+          <name>Istvan Bartha</name>
+          <url>https://pityka.github.io/s3-stream/</url>
+        </developer>
+      </developers>
     }
 ) ++ reformatOnCompileSettings
 

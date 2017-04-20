@@ -12,7 +12,7 @@ val scalatest = "org.scalatest" %% "scalatest" % scalatestVersion
 
 lazy val commonSettings = Seq(
   organization := "io.github.pityka",
-  version := "0.0.1",
+  version := "0.0.2",
   scalaVersion := "2.11.8",
   scalacOptions ++= Seq("-unchecked", "-deprecation"),
   licenses += ("Apache-2.0", url("https://opensource.org/licenses/Apache-2.0")),
@@ -51,5 +51,6 @@ lazy val s3stream = (project in file("s3-stream")).
     name := "s3-stream-fork",
     libraryDependencies ++= Seq( akkaStream, akkaHttp, akkaHttpXML,
       "io.github.pityka" %% "akka-http-unboundedqueue" % "1.0.0",
+      "org.scalaj" %% "scalaj-http" % "2.3.0",
       akkaTestkit % Test, akkaStreamTestkit % Test, scalatest % Test)
   ).dependsOn(awsRequests)

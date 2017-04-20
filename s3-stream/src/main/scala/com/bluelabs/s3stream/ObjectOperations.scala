@@ -63,9 +63,31 @@ trait ObjectOperationsSupport extends BasicS3HttpRequests with SignAndGet {
   def getMetadata(s3Location: S3Location,
                   method: HeadObjectRequest = HeadObjectRequest.default)
     : Future[ObjectMetadata] =
-    signAndGetResponse(headRequest(s3Location, method)).map(h => {
-      h.discardEntityBytes(); ObjectMetadata(h)
-    })
+    // signAndGetResponse(headRequest(s3Location, method)).map(h => {
+    //   h.discardEntityBytes(); ObjectMetadata(h)
+    // })
+    Signer.signedRequest(headRequest(s3Location, method), signingKey).map {
+      request =>
+        val headers = request.headers.map(h => h.name -> h.value)
+        val response = scalaj.http
+          .Http(request.uri.toString)
+          .method("HEAD")
+          .headers(headers)
+          .asString
+        val status = response.code
+        val akkaResponseHeaders =
+          response.headers.flatMap {
+            case (name, values) =>
+              values.flatMap { value =>
+                HttpHeader.parse(name, value) match {
+                  case HttpHeader.ParsingResult.Ok(h, _) => List(h)
+                  case _ => Nil
+                }
+              }
+          }.toList
+        ObjectMetadata(
+          HttpResponse(status = status, headers = akkaResponseHeaders))
+    }
 
   def singleUploadFlow: Flow[
     (S3Location, PutObjectRequest, ByteString),

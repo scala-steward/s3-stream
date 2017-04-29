@@ -12,7 +12,7 @@ val scalatest = "org.scalatest" %% "scalatest" % scalatestVersion
 
 lazy val commonSettings = Seq(
   organization := "io.github.pityka",
-  version := "0.0.2",
+  version := "0.0.3-SNAPSHOT",
   scalaVersion := "2.11.8",
   scalacOptions ++= Seq("-unchecked", "-deprecation"),
   licenses += ("Apache-2.0", url("https://opensource.org/licenses/Apache-2.0")),

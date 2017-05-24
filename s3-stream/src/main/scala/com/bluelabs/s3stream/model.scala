@@ -59,7 +59,7 @@ case class PostObjectRequest(headers: List[HttpHeader])
       RawHeader("x-amz-tagging",
                 tags.map(x => x._1 + "=" + x._2).mkString("&")))
   def websiteRedirection(value: String) =
-    addHeader(RawHeader("x-amz-website​-redirect-location", value))
+    addHeader(RawHeader("x-amz-website-redirect-location", value))
   def cannedAcl(value: String) = addHeader(RawHeader("x-amz-acl", value))
   def grantRead(tpe: String, value: String) =
     addHeader(RawHeader("x-amz-grant-read", tpe + "=" + value))
@@ -73,8 +73,12 @@ case class PostObjectRequest(headers: List[HttpHeader])
     addHeader(RawHeader("x-amz-grant-full-control", tpe + "=" + value))
   def serverSideEncryption =
     addHeader(RawHeader("x-amz-server-side-encryption", "AES256"))
-
+  def putCopy(source: S3Location) =
+    addHeader(
+      RawHeader("x-amz-copy-source", "/" + source.bucket + "/" + source.key))
 }
+
+
 object PostObjectRequest {
   def default = PostObjectRequest(Nil)
 }
@@ -124,7 +128,7 @@ case class PutObjectRequest(headers: List[HttpHeader])
       RawHeader("x-amz-tagging",
                 tags.map(x => x._1 + "=" + x._2).mkString("&")))
   def websiteRedirection(value: String) =
-    addHeader(RawHeader("x-amz-website​-redirect-location", value))
+    addHeader(RawHeader("x-amz-website-redirect-location", value))
   def cannedAcl(value: String) = addHeader(RawHeader("x-amz-acl", value))
   def grantRead(tpe: String, value: String) =
     addHeader(RawHeader("x-amz-grant-read", tpe + "=" + value))

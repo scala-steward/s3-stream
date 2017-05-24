@@ -55,8 +55,8 @@ trait ObjectOperationsSupport extends BasicS3HttpRequests with SignAndGet {
   def getData(s3Location: S3Location,
               method: GetObjectRequest = GetObjectRequest.default)
     : Source[ByteString, NotUsed] =
-    Source
-      .fromFuture(get(s3Location, method))
+    StreamUtils
+      .singleLazyAsync(get(s3Location, method))
       .map(_.entity.dataBytes)
       .flatMapConcat(identity)
 

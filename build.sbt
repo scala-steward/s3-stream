@@ -1,6 +1,6 @@
 val akkaVersion = "2.4.17"
 val akkaHttpVersion = "10.0.5"
-val scalatestVersion = "2.2.6"
+val scalatestVersion = "3.0.0"
 val akka = "com.typesafe.akka" %% "akka-actor" % akkaVersion
 val akkaStream = "com.typesafe.akka" %% "akka-stream" % akkaVersion
 val akkaHttp = "com.typesafe.akka" %% "akka-http" % akkaHttpVersion
@@ -12,8 +12,9 @@ val scalatest = "org.scalatest" %% "scalatest" % scalatestVersion
 
 lazy val commonSettings = Seq(
   organization := "io.github.pityka",
-  version := "0.0.2",
-  scalaVersion := "2.11.8",
+  version := "0.0.3-SNAPSHOT",
+  scalaVersion := "2.11.11",
+  crossScalaVersions := Seq("2.12.2","2.11.11"),
   scalacOptions ++= Seq("-unchecked", "-deprecation"),
   licenses += ("Apache-2.0", url("https://opensource.org/licenses/Apache-2.0")),
   pomExtra in Global := {
@@ -31,10 +32,11 @@ lazy val commonSettings = Seq(
         </developer>
       </developers>
     }
-) ++ reformatOnCompileSettings
+) //++ reformatOnCompileSettings
 
 
 lazy val root = (project in file(".")).
+settings(commonSettings:_*).
 settings(publishArtifact := false).
   aggregate(s3stream, awsRequests)
 

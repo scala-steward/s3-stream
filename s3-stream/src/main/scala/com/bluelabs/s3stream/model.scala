@@ -46,9 +46,37 @@ trait S3RequestMethod {
   def method: HttpMethod
 }
 
-object PostObjectRequest extends S3RequestMethod {
-  def method = HttpMethods.POST
-  def headers = Nil
+case class PostObjectRequest(headers: List[HttpHeader])
+    extends S3RequestMethod {
+  def method = HttpMethods.PUT
+  def addHeader(h: HttpHeader) = copy(headers = h :: headers)
+  def metadata(key: String, value: String) =
+    addHeader(RawHeader("x-amz-meta-" + key, value))
+  def storageClass(st: String) =
+    addHeader(RawHeader("x-amz-storage-class", st))
+  def tags(tags: List[(String, String)]) =
+    addHeader(
+      RawHeader("x-amz-tagging",
+                tags.map(x => x._1 + "=" + x._2).mkString("&")))
+  def websiteRedirection(value: String) =
+    addHeader(RawHeader("x-amz-website​-redirect-location", value))
+  def cannedAcl(value: String) = addHeader(RawHeader("x-amz-acl", value))
+  def grantRead(tpe: String, value: String) =
+    addHeader(RawHeader("x-amz-grant-read", tpe + "=" + value))
+  def grantWrite(tpe: String, value: String) =
+    addHeader(RawHeader("x-amz-grant-write", tpe + "=" + value))
+  def grantReadAcp(tpe: String, value: String) =
+    addHeader(RawHeader("x-amz-grant-read-acp", tpe + "=" + value))
+  def grantWriteAcp(tpe: String, value: String) =
+    addHeader(RawHeader("x-amz-grant-write-acp", tpe + "=" + value))
+  def grantFullControl(tpe: String, value: String) =
+    addHeader(RawHeader("x-amz-grant-full-control", tpe + "=" + value))
+  def serverSideEncryption =
+    addHeader(RawHeader("x-amz-server-side-encryption", "AES256"))
+
+}
+object PostObjectRequest {
+  def default = PostObjectRequest(Nil)
 }
 
 case class GetObjectRequest(headers: List[HttpHeader])
@@ -109,7 +137,7 @@ case class PutObjectRequest(headers: List[HttpHeader])
   def grantFullControl(tpe: String, value: String) =
     addHeader(RawHeader("x-amz-grant-full-control", tpe + "=" + value))
   def serverSideEncryption =
-    addHeader(RawHeader("x-amz-server-side​-encryption", "AES256"))
+    addHeader(RawHeader("x-amz-server-side-encryption", "AES256"))
 
   def putCopy(source: S3Location) =
     addHeader(

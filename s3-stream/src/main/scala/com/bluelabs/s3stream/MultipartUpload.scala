@@ -41,7 +41,7 @@ trait MultipartUploadSupport
   def multipartUpload(s3Location: S3Location,
                       chunkSize: Int = MIN_CHUNK_SIZE,
                       chunkingParallelism: Int = 4,
-                      params: PutObjectRequest = PutObjectRequest.default)
+                      params: PostObjectRequest = PostObjectRequest.default)
     : Sink[ByteString, Future[Option[CompleteMultipartUploadResult]]] = {
     val mp = initiateMultipartUpload(s3Location, params)
 
@@ -61,7 +61,7 @@ trait MultipartUploadSupport
 
   def initiateMultipartUpload(
       s3Location: S3Location,
-      params: PutObjectRequest): Future[MultipartUpload] = {
+      params: PostObjectRequest): Future[MultipartUpload] = {
 
     val req = initiateMultipartUploadRequest(s3Location, params)
     val response = for {

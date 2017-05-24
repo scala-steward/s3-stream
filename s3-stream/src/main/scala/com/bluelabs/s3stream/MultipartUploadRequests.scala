@@ -11,7 +11,7 @@ import akka.util.ByteString
 trait MultipartUploadHttpRequests extends BasicS3HttpRequests {
 
   def initiateMultipartUploadRequest(s3Location: S3Location,
-                                     method: PutObjectRequest): HttpRequest =
+                                     method: PostObjectRequest): HttpRequest =
     s3Request(s3Location, method, _.withQuery(Query("uploads")))
 
   def abortMultipartUploadRequest(s3Location: S3Location,
@@ -42,7 +42,7 @@ trait MultipartUploadHttpRequests extends BasicS3HttpRequests {
     } yield {
       s3Request(
         upload.s3Location,
-        PostObjectRequest,
+        PostObjectRequest.default,
         _.withQuery(Query("uploadId" -> upload.uploadId))).withEntity(entity)
     }
   }

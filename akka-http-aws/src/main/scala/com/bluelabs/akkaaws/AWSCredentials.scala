@@ -103,7 +103,9 @@ object AWSCredentials {
 
           Http()
             .singleRequest(request2)
-            .flatMap(r => Unmarshal(r.entity).to[JsValue])
+            .flatMap(r =>
+              Unmarshal(r.entity.withContentType(
+                ContentTypes.`application/json`)).to[JsValue])
             .map { js =>
               val fields = js.asJsObject.fields
               val ac = fields("AccessKeyId").asInstanceOf[JsString].value

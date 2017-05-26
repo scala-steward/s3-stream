@@ -5,6 +5,7 @@ import java.time.LocalDate
 import scala.collection.immutable.Seq
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
+import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
 import com.bluelabs.akkaaws.{
@@ -30,6 +31,12 @@ trait MultipartUploadSupport
     extends MultipartUploadHttpRequests
     with SignAndGet {
 
+      def retryFuture[A](f: =>Future[A],c:Int) : Future[A] =
+    if (c > 0) f.recoverWith{case e => akka.pattern.after(2 seconds, system.scheduler)(retryFuture(f,c-1))}
+    else f
+
+    def retryRequest(h: HttpRequest,c:Int) = retryFuture(singleRequest(h),c)
+
   /**
     * Uploades a stream of ByteStrings to a specified location as a multipart upload.
     *
@@ -43,7 +50,7 @@ trait MultipartUploadSupport
                       chunkingParallelism: Int = 4,
                       params: PostObjectRequest = PostObjectRequest.default)
     : Sink[ByteString, Future[Option[CompleteMultipartUploadResult]]] = {
-    val mp = initiateMultipartUpload(s3Location, params)
+    val mp = retryFuture(initiateMultipartUpload(s3Location, params),4)
 
     val requestFlow =
       createRequestFlow(mp, chunkSize, chunkingParallelism)
@@ -125,7 +132,7 @@ trait MultipartUploadSupport
                         (HttpRequest, (MultipartUpload, Int)),
                         NotUsed])
     : Flow[ByteString, UploadPartResponse, NotUsed] =
-    requestFlow.via(Http().superPool[(MultipartUpload, Int)]()).map {
+    requestFlow.mapAsync(4)(rq => retryRequest(rq._1,4).map(x => Success(x) -> rq._2).recover{case e => Failure(e) -> rq._2}).map {
       case (Success(r), (upload, index)) => {
         r.discardEntityBytes()
         val etag = r.headers.find(_.lowercaseName() == "etag").map(_.value())

@@ -28,7 +28,7 @@ case class FailedUploadPart(multipartUpload: MultipartUpload,
                             exception: Throwable)
     extends UploadPartResponse
 
-case class FailedUpload(reasons: Seq[Throwable]) extends Exception
+case class FailedUpload(reasons: Seq[Throwable]) extends Exception(reasons.head)
 
 case class CompleteMultipartUploadResult(location: Uri,
                                          bucket: String,

@@ -1,4 +1,4 @@
-package com.bluelabs.akkaaws
+package com.bluelabs.akkaaws.impl
 
 import java.security.MessageDigest
 
@@ -7,7 +7,7 @@ import akka.util.ByteString
 
 import scala.concurrent.Future
 
-object StreamUtils {
+private[akkaaws] object StreamUtils {
   def digest(
       algorithm: String = "SHA-256"): Sink[ByteString, Future[ByteString]] = {
     Flow[ByteString]

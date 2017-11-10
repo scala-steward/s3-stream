@@ -1,56 +1,49 @@
-package com.bluelabs.s3stream
+package com.bluelabs.s3stream.impl
 
-import java.time.LocalDate
-
-import scala.collection.immutable.Seq
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-import scala.util.{Failure, Success}
 
-import com.bluelabs.akkaaws.{
-  AWSCredentials,
-  CredentialScope,
-  Signer,
-  SigningKey
-}
+import com.bluelabs.akkaaws.{Signer, SigningKeyProvider}
 
 import akka.NotUsed
-import akka.actor.{ActorSystem}
-import akka.event.Logging
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.model._
+import akka.actor.ActorSystem
+import akka.http.scaladsl.model.{HttpRequest, HttpResponse, ResponseEntity}
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.http.scaladsl.unmarshalling.Unmarshaller
-import akka.stream.{Attributes, ActorMaterializer}
-import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
-import akka.util.ByteString
-import Marshalling._
+import akka.stream.ActorMaterializer
+import akka.stream.scaladsl.Source
 
-trait SignAndGet {
+private[s3stream] trait SignAndGet {
 
   implicit def system: ActorSystem
   implicit def mat: ActorMaterializer
 
   implicit def ec: ExecutionContext = mat.executionContext
 
-  def signingKey: SigningKey
+  protected def signingKey: Future[SigningKeyProvider]
 
-  def singleRequest(rq: HttpRequest): Future[HttpResponse]
+  protected def singleRequest(rq: HttpRequest): Future[HttpResponse]
 
   def signAndGetResponse(request: HttpRequest): Future[HttpResponse] =
-    for (req <- Signer.signedRequest(request, signingKey);
-         res <- singleRequest(req)) yield res
+    for {
+      signingKey <- signingKey
+      req <- Signer.signedRequest(request, signingKey)
+      res <- singleRequest(req)
+    } yield res
 
   def signAndGetAs[T](request: HttpRequest)(
       implicit um: Unmarshaller[ResponseEntity, T]): Future[T] =
     signAndGet(request).flatMap(entity => Unmarshal(entity).to[T])
 
   def signAndGet(request: HttpRequest): Future[ResponseEntity] =
-    for (req <- Signer.signedRequest(request, signingKey);
-         res <- singleRequest(req);
-         t <- entityForSuccess(res)) yield t
+    for {
+      signingKey <- signingKey
+      req <- Signer.signedRequest(request, signingKey)
+      res <- singleRequest(req)
+      t <- entityForSuccess(res)
+    } yield t
 
-  def entityForSuccess(resp: HttpResponse): Future[ResponseEntity] =
+  private def entityForSuccess(resp: HttpResponse): Future[ResponseEntity] =
     resp match {
       case HttpResponse(status, _, entity, _) if status.isSuccess() =>
         Future.successful(entity)
@@ -62,7 +55,7 @@ trait SignAndGet {
       }
     }
 
-  def makeCounterSource[T](f: Future[T]): Source[(T, Int), NotUsed] =
+  protected def makeCounterSource[T](f: Future[T]): Source[(T, Int), NotUsed] =
     Source
       .fromFuture(f)
       .mapConcat { case r => Stream.continually(r) }

@@ -1,36 +1,43 @@
-package com.bluelabs.s3stream
+package com.bluelabs.s3stream.impl
 
 import scala.concurrent.{ExecutionContext, Future}
 import akka.http.scaladsl.marshallers.xml.ScalaXmlSupport._
 import akka.http.scaladsl.marshalling.Marshal
-import akka.http.scaladsl.model._
+import akka.http.scaladsl.model.{HttpRequest, RequestEntity}
 import akka.http.scaladsl.model.Uri.Query
-import akka.http.scaladsl.model.headers.{Host, RawHeader}
 import akka.util.ByteString
+import com.bluelabs.s3stream.{
+  S3Location,
+  PostObjectRequest,
+  DeleteObjectRequest,
+  PutObjectRequest
+}
 
-trait MultipartUploadHttpRequests extends BasicS3HttpRequests {
+private[s3stream] trait MultipartUploadHttpRequests
+    extends BasicS3HttpRequests {
 
-  def initiateMultipartUploadRequest(s3Location: S3Location,
-                                     method: PostObjectRequest): HttpRequest =
+  protected def initiateMultipartUploadRequest(
+      s3Location: S3Location,
+      method: PostObjectRequest): HttpRequest =
     s3Request(s3Location, method, _.withQuery(Query("uploads")))
 
-  def abortMultipartUploadRequest(s3Location: S3Location,
-                                  uploadId: String): HttpRequest =
+  protected def abortMultipartUploadRequest(s3Location: S3Location,
+                                            uploadId: String): HttpRequest =
     s3Request(s3Location,
               DeleteObjectRequest,
               _.withQuery(Query("uploadId" -> uploadId)))
 
-  def uploadPartRequest(upload: MultipartUpload,
-                        partNumber: Int,
-                        payload: ByteString): HttpRequest =
+  protected def uploadPartRequest(upload: MultipartUpload,
+                                  partNumber: Int,
+                                  payload: ByteString): HttpRequest =
     s3Request(upload.s3Location,
               PutObjectRequest.default,
               _.withQuery(
                 Query("partNumber" -> partNumber.toString,
                       "uploadId" -> upload.uploadId))).withEntity(payload)
 
-  def completeMultipartUploadRequest(upload: MultipartUpload,
-                                     parts: Seq[(Int, String)])(
+  protected def completeMultipartUploadRequest(upload: MultipartUpload,
+                                               parts: Seq[(Int, String)])(
       implicit ec: ExecutionContext): Future[HttpRequest] = {
     val payload = <CompleteMultipartUpload>
                     {

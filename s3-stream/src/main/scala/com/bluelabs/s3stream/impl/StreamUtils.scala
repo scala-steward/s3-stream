@@ -1,12 +1,12 @@
-package com.bluelabs.s3stream
+package com.bluelabs.s3stream.impl
 
 import akka.NotUsed
 import akka.stream.scaladsl.Source
 import scala.concurrent.Future
 
-object StreamUtils {
+private[s3stream] object StreamUtils {
   def counter(initial: Int = 0): Source[Int, NotUsed] = {
-    Source.unfold(initial)((i: Int) => Some(i + 1, i))
+    Source.unfold(initial)((i: Int) => Some((i + 1, i)))
   }
 
   /** The following two methods are copied from https://github.com/MfgLabs/akka-stream-extensions

@@ -1,12 +1,12 @@
-package com.bluelabs.s3stream
+package com.bluelabs.s3stream.impl
 
-import akka.stream.stage._
+import akka.stream.stage.{GraphStage, GraphStageLogic, InHandler, OutHandler}
 import akka.stream.{Attributes, FlowShape, Inlet, Outlet}
 import akka.util.ByteString
 
 // Based on http://doc.akka.io/docs/akka/2.4.3/scala/stream/stream-cookbook.html
 // A few changes around handling the edges
-class Chunker(val chunkSize: Int)
+private class Chunker(val chunkSize: Int)
     extends GraphStage[FlowShape[ByteString, ByteString]] {
   val in = Inlet[ByteString]("Chunker.in")
   val out = Outlet[ByteString]("Chunker.out")
@@ -22,18 +22,21 @@ class Chunker(val chunkSize: Int)
           else pull(in)
         }
       })
-      setHandler(in, new InHandler {
-        override def onPush(): Unit = {
-          val elem = grab(in)
-          buffer ++= elem
-          emitChunk()
-        }
+      setHandler(
+        in,
+        new InHandler {
+          override def onPush(): Unit = {
+            val elem = grab(in)
+            buffer ++= elem
+            emitChunk()
+          }
 
-        override def onUpstreamFinish(): Unit = {
-          if (isAvailable(out)) emitChunk()
-          if (buffer.isEmpty) completeStage()
+          override def onUpstreamFinish(): Unit = {
+            if (isAvailable(out)) emitChunk()
+            if (buffer.isEmpty) completeStage()
+          }
         }
-      })
+      )
 
       private def emitChunk(): Unit = {
         if (buffer.isEmpty) {

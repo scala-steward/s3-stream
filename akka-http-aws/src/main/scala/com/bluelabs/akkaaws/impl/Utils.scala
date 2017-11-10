@@ -1,10 +1,10 @@
-package com.bluelabs.akkaaws
+package com.bluelabs.akkaaws.impl
 
 import javax.xml.bind.DatatypeConverter
 
 import akka.util.ByteString
 
-object Utils {
+private[akkaaws] object Utils {
   def encodeHex(bytes: Array[Byte]): String = {
     DatatypeConverter.printHexBinary(bytes).toLowerCase
   }

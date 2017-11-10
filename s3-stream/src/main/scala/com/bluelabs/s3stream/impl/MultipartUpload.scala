@@ -1,41 +1,37 @@
-package com.bluelabs.s3stream
-
-import java.time.LocalDate
+package com.bluelabs.s3stream.impl
 
 import scala.collection.immutable.Seq
-import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
-import com.bluelabs.akkaaws.{
-  AWSCredentials,
-  CredentialScope,
-  Signer,
-  SigningKey
-}
+import com.bluelabs.akkaaws.{Signer}
+import com.bluelabs.s3stream._
 
 import akka.NotUsed
-import akka.actor.{ActorSystem}
 import akka.event.Logging
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.model._
+import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
 import akka.http.scaladsl.unmarshalling.Unmarshal
-import akka.http.scaladsl.unmarshalling.Unmarshaller
-import akka.stream.{Attributes, ActorMaterializer}
-import akka.stream.scaladsl.{Flow, Keep, Sink, Source}
+import akka.stream.{Attributes}
+import akka.stream.scaladsl.{Flow, Sink, Keep}
 import akka.util.ByteString
-import Marshalling._
+import Marshalling.{
+  MultipartUploadUnmarshaller,
+  completeMultipartUploadResultUnmarshaller
+}
 
-trait MultipartUploadSupport
+private[s3stream] trait MultipartUploadSupport
     extends MultipartUploadHttpRequests
     with SignAndGet {
 
-      def retryFuture[A](f: =>Future[A],c:Int) : Future[A] =
-    if (c > 0) f.recoverWith{case e => akka.pattern.after(2 seconds, system.scheduler)(retryFuture(f,c-1))}
-    else f
+  protected def retryFuture[A](f: => Future[A], c: Int): Future[A] =
+    if (c > 0) f.recoverWith {
+      case e =>
+        akka.pattern.after(2 seconds, system.scheduler)(retryFuture(f, c - 1))
+    } else f
 
-    def retryRequest(h: HttpRequest,c:Int) = retryFuture(singleRequest(h),c)
+  protected def retryRequest(h: HttpRequest, c: Int) =
+    retryFuture(singleRequest(h), c)
 
   /**
     * Uploades a stream of ByteStrings to a specified location as a multipart upload.
@@ -49,8 +45,8 @@ trait MultipartUploadSupport
                       chunkSize: Int = MIN_CHUNK_SIZE,
                       chunkingParallelism: Int = 4,
                       params: PostObjectRequest = PostObjectRequest.default)
-    : Sink[ByteString, Future[Option[CompleteMultipartUploadResult]]] = {
-    val mp = retryFuture(initiateMultipartUpload(s3Location, params),4)
+    : Sink[ByteString, Future[CompleteMultipartUploadResult]] = {
+    val mp = retryFuture(initiateMultipartUpload(s3Location, params), 4)
 
     val requestFlow =
       createRequestFlow(mp, chunkSize, chunkingParallelism)
@@ -66,12 +62,13 @@ trait MultipartUploadSupport
       .toMat(completionSink(s3Location, mp))(Keep.right)
   }
 
-  def initiateMultipartUpload(
+  protected def initiateMultipartUpload(
       s3Location: S3Location,
       params: PostObjectRequest): Future[MultipartUpload] = {
 
     val req = initiateMultipartUploadRequest(s3Location, params)
     val response = for {
+      signingKey <- signingKey
       signedReq <- Signer.signedRequest(req, signingKey)
       response <- singleRequest(signedReq)
     } yield {
@@ -89,9 +86,9 @@ trait MultipartUploadSupport
     }
   }
 
-  def completeMultipartUpload(s3Location: S3Location,
-                              parts: Seq[SuccessfulUploadPart])
-    : Future[CompleteMultipartUploadResult] =
+  protected def completeMultipartUpload(
+      s3Location: S3Location,
+      parts: Seq[SuccessfulUploadPart]): Future[CompleteMultipartUploadResult] =
     for {
       req <- completeMultipartUploadRequest(parts.head.multipartUpload,
                                             parts.map(p => p.index -> p.etag))
@@ -106,9 +103,9 @@ trait MultipartUploadSupport
     * @param parallelism
     * @return
     */
-  def createRequestFlow(f: Future[MultipartUpload],
-                        chunkSize: Int = MIN_CHUNK_SIZE,
-                        parallelism: Int = 4)
+  protected def createRequestFlow(f: Future[MultipartUpload],
+                                  chunkSize: Int = MIN_CHUNK_SIZE,
+                                  parallelism: Int = 4)
     : Flow[ByteString, (HttpRequest, (MultipartUpload, Int)), NotUsed] = {
     assert(
       chunkSize >= MIN_CHUNK_SIZE,
@@ -123,55 +120,71 @@ trait MultipartUploadSupport
       }
       .mapAsync(parallelism) {
         case (req, info) =>
-          Signer.signedRequest(req, signingKey).zip(Future.successful(info))
+          signingKey.flatMap(signingKey =>
+            Signer.signedRequest(req, signingKey).zip(Future.successful(info)))
       }
   }
 
-  def createResponseFlow(
+  protected def createResponseFlow(
       requestFlow: Flow[ByteString,
                         (HttpRequest, (MultipartUpload, Int)),
                         NotUsed])
     : Flow[ByteString, UploadPartResponse, NotUsed] =
-    requestFlow.mapAsync(4)(rq => retryRequest(rq._1,4).map(x => Success(x) -> rq._2).recover{case e => Failure(e) -> rq._2}).map {
-      case (Success(r), (upload, index)) => {
-        r.discardEntityBytes()
-        val etag = r.headers.find(_.lowercaseName() == "etag").map(_.value())
-        etag
-          .map(t => SuccessfulUploadPart(upload, index, t))
-          .getOrElse(
-            FailedUploadPart(upload,
-                             index,
-                             new RuntimeException("Cannot find etag")))
+    requestFlow
+      .mapAsync(4)(rq =>
+        retryRequest(rq._1, 4).map(x => Success(x) -> rq._2).recover {
+          case e => Failure(e) -> rq._2
+      })
+      .map {
+        case (Success(r), (upload, index)) => {
+          r.discardEntityBytes()
+          val etag = r.headers.find(_.lowercaseName() == "etag").map(_.value())
+          etag
+            .map(t => SuccessfulUploadPart(upload, index, t))
+            .getOrElse(
+              FailedUploadPart(upload,
+                               index,
+                               new RuntimeException("Cannot find etag")))
+        }
+        case (Failure(e), (upload, index)) => FailedUploadPart(upload, index, e)
       }
-      case (Failure(e), (upload, index)) => FailedUploadPart(upload, index, e)
-    }
 
-  def completionSink(s3Location: S3Location, mp: Future[MultipartUpload])
-    : Sink[UploadPartResponse, Future[Option[CompleteMultipartUploadResult]]] =
+  protected def completionSink(s3Location: S3Location,
+                               mp: Future[MultipartUpload])
+    : Sink[UploadPartResponse, Future[CompleteMultipartUploadResult]] =
     Sink.seq[UploadPartResponse].mapMaterializedValue {
       case responseFuture: Future[Seq[UploadPartResponse]] =>
-        responseFuture.flatMap {
-          case responses: Seq[UploadPartResponse] =>
-            val successes = responses.collect {
-              case r: SuccessfulUploadPart => r
-            }
-            val failures = responses.collect { case r: FailedUploadPart => r }
-            if (responses.isEmpty) {
-              Future.failed(new RuntimeException("No Responses"))
-            } else if (failures.isEmpty) {
-              Future.successful(successes.sortBy(_.index))
-            } else {
-              Future.failed(FailedUpload(failures.map(_.exception)))
-            }
-        }.flatMap(completeMultipartUpload(s3Location, _).map(x => Some(x)))
+        responseFuture
+          .flatMap {
+            case responses: Seq[UploadPartResponse] =>
+              val successes = responses.collect {
+                case r: SuccessfulUploadPart => r
+              }
+              val failures = responses.collect { case r: FailedUploadPart => r }
+              if (responses.isEmpty) {
+                Future.failed(new RuntimeException("No Responses"))
+              } else if (failures.isEmpty) {
+                Future.successful(successes.sortBy(_.index))
+              } else {
+                Future.failed(FailedUpload(failures.map(_.exception)))
+              }
+          }
+          .flatMap(completeMultipartUpload(s3Location, _))
           .recoverWith {
             case e =>
-              mp.flatMap {
+              akka.event
+                .Logging(system.eventStream, "s3-stream")
+                .error(e, "Failed multipart upload.")
+              mp.foreach {
                 case MultipartUpload(_, id) =>
                   val req =
                     abortMultipartUploadRequest(s3Location, id)
-                  signAndGet(req).map(_ => None)
+                  signAndGet(req).map { response =>
+                    response.dataBytes.runWith(Sink.ignore);
+                    response
+                  }
               }
+              Future.failed(e)
           }
     }
 

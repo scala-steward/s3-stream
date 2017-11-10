@@ -1,14 +1,18 @@
-package com.bluelabs.s3stream
+package com.bluelabs.s3stream.impl
 
-import scala.concurrent.{ExecutionContext, Future}
-import akka.http.scaladsl.marshallers.xml.ScalaXmlSupport._
-import akka.http.scaladsl.marshalling.Marshal
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.model.Uri.Query
-import akka.http.scaladsl.model.headers.{Host, RawHeader}
+import akka.http.scaladsl.model.{HttpRequest, Uri}
+import akka.http.scaladsl.model.headers.Host
 import akka.util.ByteString
+import com.bluelabs.s3stream.{
+  S3Location,
+  S3RequestMethod,
+  GetObjectRequest,
+  DeleteObjectRequest,
+  HeadObjectRequest,
+  PutObjectRequest
+}
 
-trait BasicS3HttpRequests {
+private[s3stream] trait BasicS3HttpRequests {
 
   def s3Request(s3Location: S3Location,
                 method: S3RequestMethod,
@@ -39,10 +43,10 @@ trait BasicS3HttpRequests {
                      method: PutObjectRequest): HttpRequest =
     s3Request(to, method.putCopy(to))
 
-  def requestHost(s3Location: S3Location): Uri.Host =
+  private def requestHost(s3Location: S3Location): Uri.Host =
     Uri.Host(s"${s3Location.bucket}.s3.amazonaws.com")
 
-  def requestUri(s3Location: S3Location): Uri =
+  private def requestUri(s3Location: S3Location): Uri =
     Uri(s"/${s3Location.key}")
       .withHost(requestHost(s3Location))
       .withScheme("https")

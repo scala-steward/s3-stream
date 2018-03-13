@@ -1,5 +1,5 @@
-val akkaVersion = "2.5.6"
-val akkaHttpVersion = "10.0.10"
+val akkaVersion = "2.5.11"
+val akkaHttpVersion = "10.1.0"
 val scalatestVersion = "3.0.0"
 val akka = "com.typesafe.akka" %% "akka-actor" % akkaVersion
 val akkaStream = "com.typesafe.akka" %% "akka-stream" % akkaVersion
@@ -12,7 +12,7 @@ val scalatest = "org.scalatest" %% "scalatest" % scalatestVersion
 
 lazy val commonSettings = Seq(
   organization := "io.github.pityka",
-  version := "0.0.3-SNAPSHOT",
+  version := "0.0.4-SNAPSHOT",
   scalaVersion := "2.12.4",
   crossScalaVersions := Seq("2.12.4", "2.11.11"),
   scalacOptions ++= Seq("-unchecked",
@@ -25,6 +25,7 @@ lazy val commonSettings = Seq(
                         "-Xfatal-warnings",
                         "-language:postfixOps"),
   licenses += ("Apache-2.0", url("https://opensource.org/licenses/Apache-2.0")),
+  publishTo := sonatypePublishTo.value,
   pomExtra in Global := {
     <url>https://pityka.github.io/s3-stream/</url>
       <scm>
@@ -54,7 +55,7 @@ lazy val awsRequests = (project in file("akka-http-aws"))
   .settings(
     name := "akka-http-aws-fork",
     libraryDependencies ++= Seq(
-      "io.github.pityka" %% "akka-http-unboundedqueue" % "1.0.0",
+      "io.github.pityka" %% "akka-http-unboundedqueue" % "1.1.0",
       akkaHttp,
       akkaHttpSprayJson,
       scalatest % Test,
@@ -69,7 +70,6 @@ lazy val s3stream = (project in file("s3-stream"))
       akkaStream,
       akkaHttp,
       akkaHttpXML,
-      "io.github.pityka" %% "akka-http-unboundedqueue" % "1.0.0",
       "org.scalaj" %% "scalaj-http" % "2.3.0",
       akkaTestkit % Test,
       akkaStreamTestkit % Test,

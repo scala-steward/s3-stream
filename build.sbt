@@ -55,7 +55,7 @@ lazy val awsRequests = (project in file("akka-http-aws"))
   .settings(
     name := "akka-http-aws-fork",
     libraryDependencies ++= Seq(
-      "io.github.pityka" %% "akka-http-unboundedqueue" % "1.1.0",
+      "io.github.pityka" %% "akka-http-unboundedqueue" % "1.2.0",
       akkaHttp,
       akkaHttpSprayJson,
       scalatest % Test,

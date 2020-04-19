@@ -4,7 +4,7 @@ import com.bluelabs.akkaaws.{SigningKeyProvider}
 import scala.concurrent.Future
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model._
-import akka.stream.{ActorMaterializer, Materializer}
+import akka.http.scaladsl.Http
 
 trait S3ClientSupport
     extends impl.ObjectOperationsSupport
@@ -13,20 +13,17 @@ trait S3ClientSupport
 
 trait QueuedRequest {
   implicit def system: ActorSystem
-  implicit def mat: Materializer
-  def singleRequest(rq: HttpRequest) = httpqueue.HttpQueue(system).queue(rq)
+  def singleRequest(rq: HttpRequest) = Http(system).singleRequest(rq)
 }
 
 trait DefaultKey {
   implicit def system: ActorSystem
-  implicit def mat: Materializer
   def region: String
   def signingKey = SigningKeyProvider.default(region)
 }
 
 trait StaticKey {
   implicit def system: ActorSystem
-  implicit def mat: Materializer
   def region: String
   def accessKeyId: String
   def secretAccessKey: String
@@ -38,8 +35,7 @@ trait StaticKey {
 }
 
 class S3ClientQueued(val region: String)(
-    implicit val system: ActorSystem,
-    val mat: ActorMaterializer
+    implicit val system: ActorSystem
 ) extends S3ClientSupport
     with QueuedRequest
     with DefaultKey
@@ -48,7 +44,7 @@ class S3ClientQueuedStatic(
     val region: String,
     val accessKeyId: String,
     val secretAccessKey: String
-)(implicit val system: ActorSystem, val mat: ActorMaterializer)
+)(implicit val system: ActorSystem)
     extends S3ClientSupport
     with QueuedRequest
     with StaticKey

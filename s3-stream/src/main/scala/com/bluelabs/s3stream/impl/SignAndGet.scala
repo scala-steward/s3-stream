@@ -10,15 +10,13 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse, ResponseEntity}
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.http.scaladsl.unmarshalling.Unmarshaller
-import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.Source
 
 private[s3stream] trait SignAndGet {
 
   implicit def system: ActorSystem
-  implicit def mat: ActorMaterializer
 
-  implicit def ec: ExecutionContext = mat.executionContext
+  implicit def ec: ExecutionContext = system.dispatcher
 
   protected def signingKey: Future[SigningKeyProvider]
 
@@ -58,7 +56,7 @@ private[s3stream] trait SignAndGet {
 
   protected def makeCounterSource[T](f: Future[T]): Source[(T, Int), NotUsed] =
     Source
-      .fromFuture(f)
+      .future(f)
       .mapConcat { case r => Stream.continually(r) }
       .zip(StreamUtils.counter(1))
 

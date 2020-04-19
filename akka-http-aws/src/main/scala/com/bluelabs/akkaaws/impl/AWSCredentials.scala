@@ -1,6 +1,7 @@
 package com.bluelabs.akkaaws.impl
 
 import scala.concurrent._
+import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling._
 import akka.http.scaladsl.model.headers.{Host}
@@ -10,6 +11,7 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import spray.json._
 import java.time._
 import java.util.concurrent.atomic.AtomicReference
+import akka.http.scaladsl.Http
 
 private[akkaaws] trait CredentialProvider {
   def credentials(
@@ -166,9 +168,8 @@ private object CredentialImpl {
           .withPath(Uri.Path("/latest/meta-data/iam/security-credentials/"))
       )
 
-    httpqueue
-      .HttpQueue(as)
-      .queue(request1)
+    Http(as)
+      .singleRequest(request1)
       .flatMap(r => Unmarshal(r.entity).to[String])
       .flatMap { line =>
         val request2 = HttpRequest(HttpMethods.GET)
@@ -182,9 +183,8 @@ private object CredentialImpl {
               )
           )
 
-        httpqueue
-          .HttpQueue(as)
-          .queue(request2)
+        Http(as)
+          .singleRequest(request2)
           .flatMap(r =>
             Unmarshal(r.entity.withContentType(ContentTypes.`application/json`))
               .to[JsValue]

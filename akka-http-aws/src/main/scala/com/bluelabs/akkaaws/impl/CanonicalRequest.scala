@@ -4,12 +4,14 @@ import akka.http.scaladsl.model.Uri.Query
 import akka.http.scaladsl.model.{HttpHeader, HttpRequest}
 
 // Documentation: http://docs.aws.amazon.com/general/latest/gr/sigv4-create-canonical-request.html
-private[akkaaws] case class CanonicalRequest(method: String,
-                                             uri: String,
-                                             queryString: String,
-                                             headerString: String,
-                                             signedHeaders: String,
-                                             hashedPayload: String) {
+private[akkaaws] case class CanonicalRequest(
+    method: String,
+    uri: String,
+    queryString: String,
+    headerString: String,
+    signedHeaders: String,
+    hashedPayload: String
+) {
   def canonicalString: String = {
     s"$method\n$uri\n$queryString\n$headerString\n\n$signedHeaders\n$hashedPayload"
   }
@@ -46,7 +48,8 @@ private[akkaaws] object CanonicalRequest {
     val grouped: Map[String, Seq[HttpHeader]] =
       headers.groupBy(_.lowercaseName())
     val combined = grouped.mapValues(
-      _.map(_.value().replaceAll("\\s+", " ").trim).mkString(","))
+      _.map(_.value().replaceAll("\\s+", " ").trim).mkString(",")
+    )
     combined.toList
       .sortBy(_._1)
       .map { case (k: String, v: String) => s"$k:$v" }

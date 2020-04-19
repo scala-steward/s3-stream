@@ -26,8 +26,8 @@ case class PostObjectRequest(headers: List[HttpHeader])
     addHeader(RawHeader("x-amz-storage-class", st))
   def tags(tags: List[(String, String)]) =
     addHeader(
-      RawHeader("x-amz-tagging",
-                tags.map(x => x._1 + "=" + x._2).mkString("&")))
+      RawHeader("x-amz-tagging", tags.map(x => x._1 + "=" + x._2).mkString("&"))
+    )
   def websiteRedirection(value: String) =
     addHeader(RawHeader("x-amz-website​-redirect-location", value))
   def cannedAcl(value: String) = addHeader(RawHeader("x-amz-acl", value))
@@ -90,8 +90,8 @@ case class PutObjectRequest(headers: List[HttpHeader]) extends S3RequestMethod {
     addHeader(RawHeader("x-amz-storage-class", st))
   def tags(tags: List[(String, String)]) =
     addHeader(
-      RawHeader("x-amz-tagging",
-                tags.map(x => x._1 + "=" + x._2).mkString("&")))
+      RawHeader("x-amz-tagging", tags.map(x => x._1 + "=" + x._2).mkString("&"))
+    )
   def websiteRedirection(value: String) =
     addHeader(RawHeader("x-amz-website​-redirect-location", value))
   def cannedAcl(value: String) = addHeader(RawHeader("x-amz-acl", value))
@@ -110,7 +110,8 @@ case class PutObjectRequest(headers: List[HttpHeader]) extends S3RequestMethod {
 
   def putCopy(source: S3Location) =
     addHeader(
-      RawHeader("x-amz-copy-source", "/" + source.bucket + "/" + source.key))
+      RawHeader("x-amz-copy-source", "/" + source.bucket + "/" + source.key)
+    )
 }
 object PutObjectRequest {
   def default = PutObjectRequest(Nil)

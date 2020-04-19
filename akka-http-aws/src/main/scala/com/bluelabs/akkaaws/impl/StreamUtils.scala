@@ -9,7 +9,8 @@ import scala.concurrent.Future
 
 private[akkaaws] object StreamUtils {
   def digest(
-      algorithm: String = "SHA-256"): Sink[ByteString, Future[ByteString]] = {
+      algorithm: String = "SHA-256"
+  ): Sink[ByteString, Future[ByteString]] = {
     Flow[ByteString]
       .fold(MessageDigest.getInstance(algorithm)) {
         case (digest: MessageDigest, bytes: ByteString) => {

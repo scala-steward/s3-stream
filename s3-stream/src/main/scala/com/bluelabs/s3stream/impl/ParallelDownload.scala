@@ -14,16 +14,19 @@ private[s3stream] trait ParallelDownloadSupport
     with SignAndGet
     with MultipartUploadSupport {
 
-  def getData(s3Location: S3Location,
-              partSize: Int = MIN_CHUNK_SIZE,
-              params: GetObjectRequest = GetObjectRequest.default,
-              parallelism: Int): Source[ByteString, NotUsed] = {
+  def getData(
+      s3Location: S3Location,
+      partSize: Int = MIN_CHUNK_SIZE,
+      params: GetObjectRequest = GetObjectRequest.default,
+      parallelism: Int
+  ): Source[ByteString, NotUsed] = {
     def makeParts =
       getMetadata(s3Location, HeadObjectRequest(params.headers)).map {
         metadata =>
           val contentLength = metadata.contentLength.get
           val intervals = 0L until contentLength by partSize map (s =>
-            (s, min(contentLength, s + partSize)))
+            (s, min(contentLength, s + partSize))
+          )
           intervals
             .map {
               case (startIdx, openEndIdx) =>
@@ -31,18 +34,17 @@ private[s3stream] trait ParallelDownloadSupport
                   retryFuture(
                     getDataOnce(
                       s3Location,
-                      params.range(headers.ByteRange(startIdx, openEndIdx - 1)))
-                      .runFold(ByteString())(_ ++ _),
-                    3)
+                      params.range(headers.ByteRange(startIdx, openEndIdx - 1))
+                    ).runFold(ByteString())(_ ++ _),
+                    3
+                  )
             }
       }
 
     StreamUtils
       .singleLazyAsync(makeParts)
       .mapConcat(identity)
-      .mapAsync(parallelism) { fun =>
-        fun()
-      }
+      .mapAsync(parallelism) { fun => fun() }
 
   }
 

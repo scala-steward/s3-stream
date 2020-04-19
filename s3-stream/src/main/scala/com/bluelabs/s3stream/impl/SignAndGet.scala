@@ -31,8 +31,9 @@ private[s3stream] trait SignAndGet {
       res <- singleRequest(req)
     } yield res
 
-  def signAndGetAs[T](request: HttpRequest)(
-      implicit um: Unmarshaller[ResponseEntity, T]): Future[T] =
+  def signAndGetAs[T](
+      request: HttpRequest
+  )(implicit um: Unmarshaller[ResponseEntity, T]): Future[T] =
     signAndGet(request).flatMap(entity => Unmarshal(entity).to[T])
 
   def signAndGet(request: HttpRequest): Future[ResponseEntity] =

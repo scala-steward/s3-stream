@@ -12,13 +12,17 @@ import java.time._
 import java.util.concurrent.atomic.AtomicReference
 
 private[akkaaws] trait CredentialProvider {
-  def credentials(implicit as: ActorSystem,
-                  mat: Materializer): Future[AWSCredentials]
+  def credentials(
+      implicit as: ActorSystem,
+      mat: Materializer
+  ): Future[AWSCredentials]
 }
 
 private[akkaaws] object CredentialProvider {
-  def default(implicit as: ActorSystem,
-              mat: Materializer): Future[CredentialProvider] =
+  def default(
+      implicit as: ActorSystem,
+      mat: Materializer
+  ): Future[CredentialProvider] =
     CredentialImpl.defaultCredentialProviderChain.map {
       case Some(cred) => new CredentialImpl.CredentialProviderImpl(cred)
       case None       => throw new RuntimeException("No credential found")
@@ -26,10 +30,13 @@ private[akkaaws] object CredentialProvider {
 
   def static(accessKeyId: String, secretAccessKey: String) =
     new CredentialProvider {
-      def credentials(implicit as: ActorSystem,
-                      mat: Materializer): Future[AWSCredentials] =
+      def credentials(
+          implicit as: ActorSystem,
+          mat: Materializer
+      ): Future[AWSCredentials] =
         Future.successful(
-          CredentialImpl.BasicCredentials(accessKeyId, secretAccessKey))
+          CredentialImpl.BasicCredentials(accessKeyId, secretAccessKey)
+        )
     }
 
 }
@@ -46,8 +53,10 @@ private object CredentialImpl {
     def accessKeyId: String
     def secretAccessKey: String
 
-    def refresh(implicit as: ActorSystem,
-                am: Materializer): Future[(AWSCredentialsWithRefresh, Boolean)]
+    def refresh(
+        implicit as: ActorSystem,
+        am: Materializer
+    ): Future[(AWSCredentialsWithRefresh, Boolean)]
   }
 
   class CredentialProviderImpl(p: AWSCredentialsWithRefresh)
@@ -73,11 +82,12 @@ private object CredentialImpl {
     def maySessionToken = None
   }
 
-  case class SessionCredentials(accessKeyId: String,
-                                secretAccessKey: String,
-                                sessionToken: String,
-                                expiration: Instant)
-      extends AWSCredentialsWithRefresh {
+  case class SessionCredentials(
+      accessKeyId: String,
+      secretAccessKey: String,
+      sessionToken: String,
+      expiration: Instant
+  ) extends AWSCredentialsWithRefresh {
 
     def maySessionToken = Some(sessionToken)
 
@@ -86,7 +96,8 @@ private object CredentialImpl {
       val log = akka.event.Logging(as.eventStream, "awscredentials")
       if (java.time.Instant.now.isAfter(expiration.minusSeconds(60 * 5))) {
         log.debug(
-          "Refreshing session credentials because they will expire in 5 minutes.")
+          "Refreshing session credentials because they will expire in 5 minutes."
+        )
         fetchFromMetadata.map(_.get -> true)
       } else Future.successful(this -> false)
     }
@@ -105,17 +116,15 @@ private object CredentialImpl {
       val sk = default
         .find(_.trim.startsWith("aws_secret_access_key"))
         .map(_.split("=")(1).trim)
-      ac.flatMap { ac =>
-        sk.map { sk =>
-          BasicCredentials(ac, sk)
-        }
-      }
+      ac.flatMap { ac => sk.map { sk => BasicCredentials(ac, sk) } }
 
     } else None
   }
 
-  def defaultCredentialProviderChain(implicit as: ActorSystem,
-                                     mat: Materializer) = {
+  def defaultCredentialProviderChain(
+      implicit as: ActorSystem,
+      mat: Materializer
+  ) = {
 
     val opt = {
       val access = System.getenv("AWS_ACCESS_KEY_ID")
@@ -154,7 +163,8 @@ private object CredentialImpl {
         Uri()
           .withHost(address)
           .withScheme("http")
-          .withPath(Uri.Path("/latest/meta-data/iam/security-credentials/")))
+          .withPath(Uri.Path("/latest/meta-data/iam/security-credentials/"))
+      )
 
     httpqueue
       .HttpQueue(as)
@@ -168,14 +178,17 @@ private object CredentialImpl {
               .withHost(address)
               .withScheme("http")
               .withPath(
-                Uri.Path("/latest/meta-data/iam/security-credentials/" + line)))
+                Uri.Path("/latest/meta-data/iam/security-credentials/" + line)
+              )
+          )
 
         httpqueue
           .HttpQueue(as)
           .queue(request2)
           .flatMap(r =>
             Unmarshal(r.entity.withContentType(ContentTypes.`application/json`))
-              .to[JsValue])
+              .to[JsValue]
+          )
           .map { js =>
             val fields = js.asJsObject.fields
             val ac = fields("AccessKeyId").asInstanceOf[JsString].value
@@ -188,7 +201,9 @@ private object CredentialImpl {
                 ac,
                 sk,
                 token,
-                ZonedDateTime.parse(expirationString).toInstant))
+                ZonedDateTime.parse(expirationString).toInstant
+              )
+            )
           }
       } recover {
       case e =>

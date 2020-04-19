@@ -33,20 +33,22 @@ trait StaticKey {
 
   def signingKey =
     Future.successful(
-      SigningKeyProvider.static(accessKeyId, secretAccessKey, region))
+      SigningKeyProvider.static(accessKeyId, secretAccessKey, region)
+    )
 }
 
-class S3ClientQueued(val region: String)(implicit val system: ActorSystem,
-                                         val mat: ActorMaterializer)
-    extends S3ClientSupport
+class S3ClientQueued(val region: String)(
+    implicit val system: ActorSystem,
+    val mat: ActorMaterializer
+) extends S3ClientSupport
     with QueuedRequest
     with DefaultKey
 
-class S3ClientQueuedStatic(val region: String,
-                           val accessKeyId: String,
-                           val secretAccessKey: String)(
-    implicit val system: ActorSystem,
-    val mat: ActorMaterializer)
+class S3ClientQueuedStatic(
+    val region: String,
+    val accessKeyId: String,
+    val secretAccessKey: String
+)(implicit val system: ActorSystem, val mat: ActorMaterializer)
     extends S3ClientSupport
     with QueuedRequest
     with StaticKey

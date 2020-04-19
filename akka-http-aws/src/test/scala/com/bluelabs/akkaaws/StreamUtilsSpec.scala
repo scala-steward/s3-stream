@@ -21,7 +21,8 @@ class StreamUtilsSpec(_system: ActorSystem)
   def this() = this(ActorSystem("StreamUtilsSpec"))
 
   implicit val materializer = ActorMaterializer(
-    ActorMaterializerSettings(system).withDebugLogging(true))
+    ActorMaterializerSettings(system).withDebugLogging(true)
+  )
 
   implicit val defaultPatience =
     PatienceConfig(timeout = Span(5, Seconds), interval = Span(30, Millis))
@@ -39,13 +40,16 @@ class StreamUtilsSpec(_system: ActorSystem)
 
   it should "calculate the digest of a file" in {
     val input = StreamConverters.fromInputStream(() =>
-      getClass.getResourceAsStream("/testdata.txt"))
+      getClass.getResourceAsStream("/testdata.txt")
+    )
     val flow: Future[ByteString] = input.runWith(StreamUtils.digest())
 
     val testDigest = MessageDigest.getInstance("SHA-256")
     val dis: DigestInputStream =
-      new DigestInputStream(getClass.getResourceAsStream("/testdata.txt"),
-                            testDigest)
+      new DigestInputStream(
+        getClass.getResourceAsStream("/testdata.txt"),
+        testDigest
+      )
 
     val buffer = new Array[Byte](1024)
 

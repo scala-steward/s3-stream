@@ -17,7 +17,8 @@ class ChunkerSpec(_system: ActorSystem)
   def this() = this(ActorSystem("ChunkerSpec"))
 
   implicit val materializer = ActorMaterializer(
-    ActorMaterializerSettings(system).withDebugLogging(true))
+    ActorMaterializerSettings(system).withDebugLogging(true)
+  )
 
   "A Chunker" should "resize larger chunks into smaller ones" in {
     val bytes = ByteString(1, 2, 3, 4, 5, 6)
@@ -43,10 +44,12 @@ class ChunkerSpec(_system: ActorSystem)
     pub.sendNext(bytes)
     pub.sendComplete()
     sub.request(4)
-    sub.expectNext(ByteString(1, 2),
-                   ByteString(3, 4),
-                   ByteString(5, 6),
-                   ByteString(7))
+    sub.expectNext(
+      ByteString(1, 2),
+      ByteString(3, 4),
+      ByteString(5, 6),
+      ByteString(7)
+    )
   }
 
   it should "resize smaller chunks into larger ones" in {
@@ -65,10 +68,12 @@ class ChunkerSpec(_system: ActorSystem)
     pub.sendNext(ByteString(7))
     pub.sendComplete()
     sub.request(4)
-    sub.expectNext(ByteString(1, 2),
-                   ByteString(3, 4),
-                   ByteString(5, 6),
-                   ByteString(7))
+    sub.expectNext(
+      ByteString(1, 2),
+      ByteString(3, 4),
+      ByteString(5, 6),
+      ByteString(7)
+    )
   }
 
   it should "send bytes on complete" in {

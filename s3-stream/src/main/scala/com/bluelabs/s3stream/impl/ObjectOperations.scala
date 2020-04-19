@@ -24,18 +24,19 @@ private[s3stream] trait ObjectOperationsSupport
     extends BasicS3HttpRequests
     with SignAndGet {
 
-  def s3ObjectOperationFlow
-    : Flow[(S3Location, S3RequestMethod),
-           (Try[HttpResponse], (S3Location, S3RequestMethod)),
-           NotUsed] =
+  def s3ObjectOperationFlow: Flow[
+    (S3Location, S3RequestMethod),
+    (Try[HttpResponse], (S3Location, S3RequestMethod)),
+    NotUsed
+  ] =
     Flow[(S3Location, S3RequestMethod)]
       .mapAsync(1) {
         case (loc, method) =>
-          signingKey.flatMap(
-            signingKey =>
-              Signer
-                .signedRequest(s3Request(loc, method), signingKey)
-                .map(r => (r, (loc, method))))
+          signingKey.flatMap(signingKey =>
+            Signer
+              .signedRequest(s3Request(loc, method), signingKey)
+              .map(r => (r, (loc, method)))
+          )
       }
       .via(Http().superPool[(S3Location, S3RequestMethod)]())
 
@@ -43,25 +44,29 @@ private[s3stream] trait ObjectOperationsSupport
     signAndGetResponse(deleteRequest(s3Location))
       .flatMap(_.toStrict(30 seconds))
 
-  def get(s3Location: S3Location,
-          method: GetObjectRequest = GetObjectRequest.default)
-    : Future[HttpResponse] =
+  def get(
+      s3Location: S3Location,
+      method: GetObjectRequest = GetObjectRequest.default
+  ): Future[HttpResponse] =
     signAndGetResponse(getRequest(s3Location, method))
 
-  def getDataOnce(s3Location: S3Location,
-                  method: GetObjectRequest = GetObjectRequest.default)
-    : Source[ByteString, NotUsed] =
+  def getDataOnce(
+      s3Location: S3Location,
+      method: GetObjectRequest = GetObjectRequest.default
+  ): Source[ByteString, NotUsed] =
     StreamUtils
       .singleLazyAsync(get(s3Location, method))
       .map(_.entity.dataBytes)
       .flatMapConcat(identity)
 
-  def getMetadata(s3Location: S3Location,
-                  method: HeadObjectRequest = HeadObjectRequest.default)
-    : Future[ObjectMetadata] =
+  def getMetadata(
+      s3Location: S3Location,
+      method: HeadObjectRequest = HeadObjectRequest.default
+  ): Future[ObjectMetadata] =
     signingKey
       .flatMap(signingKey =>
-        Signer.signedRequest(headRequest(s3Location, method), signingKey))
+        Signer.signedRequest(headRequest(s3Location, method), signingKey)
+      )
       .map { request =>
         val headers = request.headers.map(h => h.name -> h.value)
         val response = scalaj.http
@@ -81,27 +86,32 @@ private[s3stream] trait ObjectOperationsSupport
               }
           }.toList
         ObjectMetadata(
-          HttpResponse(status = status, headers = akkaResponseHeaders))
+          HttpResponse(status = status, headers = akkaResponseHeaders)
+        )
       }
 
-  def singleUploadFlow: Flow[(S3Location, PutObjectRequest, ByteString),
-                             (Try[HttpResponse], (S3Location, S3RequestMethod)),
-                             NotUsed] =
+  def singleUploadFlow: Flow[
+    (S3Location, PutObjectRequest, ByteString),
+    (Try[HttpResponse], (S3Location, S3RequestMethod)),
+    NotUsed
+  ] =
     Flow[(S3Location, PutObjectRequest, ByteString)]
       .mapAsync(1) {
         case (loc, method, payload) =>
           signingKey
             .flatMap(signingKey =>
               Signer
-                .signedRequest(putRequest(loc, method, payload), signingKey))
+                .signedRequest(putRequest(loc, method, payload), signingKey)
+            )
             .map(r => (r, (loc, method)))
       }
       .via(Http().superPool[(S3Location, S3RequestMethod)]())
 
-  def put(s3Location: S3Location,
-          payload: ByteString,
-          method: PutObjectRequest = PutObjectRequest.default)
-    : Future[HttpResponse] = {
+  def put(
+      s3Location: S3Location,
+      payload: ByteString,
+      method: PutObjectRequest = PutObjectRequest.default
+  ): Future[HttpResponse] = {
     val req = putRequest(s3Location, method, payload)
 
     for {

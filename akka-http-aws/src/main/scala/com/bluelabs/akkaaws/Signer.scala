@@ -14,11 +14,11 @@ import scala.concurrent.{ExecutionContext, Future}
 object Signer {
   private val dateFormatter = DateTimeFormatter.ofPattern("YYYYMMdd'T'HHmmssX")
 
-  def signedRequest(request: HttpRequest,
-                    keyProvider: SigningKeyProvider,
-                    date: ZonedDateTime = ZonedDateTime.now(ZoneOffset.UTC))(
-      implicit as: ActorSystem,
-      mat: Materializer): Future[HttpRequest] = {
+  def signedRequest(
+      request: HttpRequest,
+      keyProvider: SigningKeyProvider,
+      date: ZonedDateTime = ZonedDateTime.now(ZoneOffset.UTC)
+  )(implicit as: ActorSystem, mat: Materializer): Future[HttpRequest] = {
     implicit val ec: ExecutionContext = mat.executionContext
     keyProvider.signingKey.flatMap { key =>
       val hashedBody =
@@ -31,8 +31,8 @@ object Signer {
         case hb =>
           val headersToAdd = Seq(
             RawHeader("x-amz-date", date.format(dateFormatter)),
-            RawHeader("x-amz-content-sha256", hb)) ++ sessionHeader(
-            key.credentials)
+            RawHeader("x-amz-content-sha256", hb)
+          ) ++ sessionHeader(key.credentials)
           val reqWithHeaders =
             request.withHeaders(request.headers ++ headersToAdd)
           val cr = impl.CanonicalRequest.from(reqWithHeaders)
@@ -56,28 +56,34 @@ object Signer {
       algorithm: String,
       key: impl.SigningKey,
       requestDate: ZonedDateTime,
-      canonicalRequest: impl.CanonicalRequest): HttpHeader = {
+      canonicalRequest: impl.CanonicalRequest
+  ): HttpHeader = {
     RawHeader(
       "Authorization",
-      authorizationString(algorithm, key, requestDate, canonicalRequest))
+      authorizationString(algorithm, key, requestDate, canonicalRequest)
+    )
   }
 
   private def authorizationString(
       algorithm: String,
       key: impl.SigningKey,
       requestDate: ZonedDateTime,
-      canonicalRequest: impl.CanonicalRequest): String = {
-    s"$algorithm Credential=${key.credentialString}, SignedHeaders=${canonicalRequest.signedHeaders}, Signature=${key.hexEncodedSignature(
-      stringToSign(algorithm, key, requestDate, canonicalRequest).getBytes())}"
+      canonicalRequest: impl.CanonicalRequest
+  ): String = {
+    s"$algorithm Credential=${key.credentialString}, SignedHeaders=${canonicalRequest.signedHeaders}, Signature=${key
+      .hexEncodedSignature(stringToSign(algorithm, key, requestDate, canonicalRequest).getBytes())}"
   }
 
-  private def stringToSign(algorithm: String,
-                           signingKey: impl.SigningKey,
-                           requestDate: ZonedDateTime,
-                           canonicalRequest: impl.CanonicalRequest): String = {
+  private def stringToSign(
+      algorithm: String,
+      signingKey: impl.SigningKey,
+      requestDate: ZonedDateTime,
+      canonicalRequest: impl.CanonicalRequest
+  ): String = {
     val digest = MessageDigest.getInstance("SHA-256")
     val hashedRequest = impl.Utils.encodeHex(
-      digest.digest(canonicalRequest.canonicalString.getBytes()))
+      digest.digest(canonicalRequest.canonicalString.getBytes())
+    )
     s"$algorithm\n${requestDate.format(dateFormatter)}\n${signingKey.scope.scopeString}\n$hashedRequest"
   }
 

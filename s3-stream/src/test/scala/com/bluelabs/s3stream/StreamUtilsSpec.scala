@@ -21,7 +21,8 @@ class StreamUtilsSpec(_system: ActorSystem)
   def this() = this(ActorSystem("StreamUtilsSpec"))
 
   implicit val materializer = ActorMaterializer(
-    ActorMaterializerSettings(system).withDebugLogging(true))
+    ActorMaterializerSettings(system).withDebugLogging(true)
+  )
 
   "counter" should "increment starting from 0" in {
     val testSource = StreamUtils.counter()

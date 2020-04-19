@@ -14,7 +14,7 @@ val scalatest = "org.scalatest" %% "scalatest" % scalatestVersion
 
 lazy val commonSettings = Seq(
   organization := "io.github.pityka",
-  version := "0.0.4-SNAPSHOT",
+  version := "0.0.4",
   scalaVersion := "2.12.11",
   scalacOptions ++= Seq(
     "-unchecked",

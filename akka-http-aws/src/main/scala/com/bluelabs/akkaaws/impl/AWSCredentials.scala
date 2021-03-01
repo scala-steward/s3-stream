@@ -1,7 +1,6 @@
 package com.bluelabs.akkaaws.impl
 
 import scala.concurrent._
-import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.unmarshalling._
 import akka.http.scaladsl.model.headers.{Host}
@@ -49,7 +48,7 @@ private[akkaaws] sealed trait AWSCredentials {
   def maySessionToken: Option[String]
 }
 
-private object CredentialImpl {
+private[akkaaws] object CredentialImpl {
 
   sealed trait AWSCredentialsWithRefresh extends AWSCredentials {
     def accessKeyId: String
@@ -109,7 +108,7 @@ private object CredentialImpl {
     val file = System.getProperty("user.home") + "/.aws/credentials"
     if (new java.io.File(file).canRead) {
       val source = scala.io.Source.fromFile(file)
-      val content = source.getLines.toVector
+      val content = source.getLines().toVector
       source.close
       val default = content.dropWhile(line => line.trim != "[default]")
       val ac = default

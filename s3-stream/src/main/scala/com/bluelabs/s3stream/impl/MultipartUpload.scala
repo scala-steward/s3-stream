@@ -89,6 +89,7 @@ private[s3stream] trait MultipartUploadSupport
             Future.failed(new Exception(err))
         }
       }
+      case _ => Future.failed(new RuntimeException())
     }
   }
 

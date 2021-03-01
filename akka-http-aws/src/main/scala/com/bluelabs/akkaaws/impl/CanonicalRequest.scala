@@ -47,7 +47,7 @@ private[akkaaws] object CanonicalRequest {
   def canonicalHeaderString(headers: Seq[HttpHeader]): String = {
     val grouped: Map[String, Seq[HttpHeader]] =
       headers.groupBy(_.lowercaseName())
-    val combined = grouped.mapValues(
+    val combined = grouped.view.mapValues(
       _.map(_.value().replaceAll("\\s+", " ").trim).mkString(",")
     )
     combined.toList

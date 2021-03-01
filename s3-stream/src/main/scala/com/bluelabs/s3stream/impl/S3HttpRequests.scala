@@ -20,7 +20,7 @@ private[s3stream] trait BasicS3HttpRequests {
       uriFn: (Uri => Uri) = identity
   ): HttpRequest =
     HttpRequest(method.method)
-      .withHeaders(method.headers: _*)
+      .withHeaders(method.headers)
       .addHeader(Host(requestHost(s3Location)))
       .withUri(uriFn(requestUri(s3Location)))
 

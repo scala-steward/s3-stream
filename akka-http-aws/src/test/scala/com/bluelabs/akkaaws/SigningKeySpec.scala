@@ -2,16 +2,20 @@ package com.bluelabs.akkaaws
 
 import java.time.LocalDate
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.{AnyFlatSpec => FlatSpec}
 
 class SigningKeySpec extends FlatSpec with Matchers {
   behavior of "A Signing Key"
 
   val credentials =
-    AWSCredentials("AKIDEXAMPLE", "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY")
+    impl.CredentialImpl.BasicCredentials(
+      "AKIDEXAMPLE",
+      "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY"
+    )
 
   val scope = CredentialScope(LocalDate.of(2015, 8, 30), "us-east-1", "iam")
-  val signingKey = SigningKey(credentials, scope)
+  val signingKey = impl.SigningKey(credentials, scope)
 
   it should "produce a signing key" in {
     val expected: Array[Byte] = Array(196, 175, 177, 204, 87, 113, 216, 113,

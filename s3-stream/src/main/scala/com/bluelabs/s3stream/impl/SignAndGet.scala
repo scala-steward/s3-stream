@@ -52,12 +52,13 @@ private[s3stream] trait SignAndGet {
             Future.failed(new Exception(err))
         }
       }
+      case _ => Future.failed(new RuntimeException())
     }
 
   protected def makeCounterSource[T](f: Future[T]): Source[(T, Int), NotUsed] =
     Source
       .future(f)
-      .mapConcat { case r => Stream.continually(r) }
+      .mapConcat { case r => LazyList.continually(r) }
       .zip(StreamUtils.counter(1))
 
 }

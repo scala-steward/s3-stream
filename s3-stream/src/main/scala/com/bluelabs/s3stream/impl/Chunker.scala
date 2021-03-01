@@ -6,7 +6,7 @@ import akka.util.ByteString
 
 // Based on http://doc.akka.io/docs/akka/2.4.3/scala/stream/stream-cookbook.html
 // A few changes around handling the edges
-private class Chunker(val chunkSize: Int)
+private[s3stream] class Chunker(val chunkSize: Int)
     extends GraphStage[FlowShape[ByteString, ByteString]] {
   val in = Inlet[ByteString]("Chunker.in")
   val out = Outlet[ByteString]("Chunker.out")

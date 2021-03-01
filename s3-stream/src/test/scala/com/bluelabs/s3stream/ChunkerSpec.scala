@@ -6,7 +6,9 @@ import akka.stream.testkit.scaladsl.{TestSink, TestSource}
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings}
 import akka.testkit.TestKit
 import akka.util.ByteString
-import org.scalatest.{BeforeAndAfterAll, FlatSpecLike, Matchers}
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.{AnyFlatSpecLike => FlatSpecLike}
 
 class ChunkerSpec(_system: ActorSystem)
     extends TestKit(_system)
@@ -16,6 +18,7 @@ class ChunkerSpec(_system: ActorSystem)
 
   def this() = this(ActorSystem("ChunkerSpec"))
 
+  @scala.annotation.nowarn
   implicit val materializer = ActorMaterializer(
     ActorMaterializerSettings(system).withDebugLogging(true)
   )
@@ -24,7 +27,7 @@ class ChunkerSpec(_system: ActorSystem)
     val bytes = ByteString(1, 2, 3, 4, 5, 6)
     val (pub, sub) = TestSource
       .probe[ByteString]
-      .via(new Chunker(2))
+      .via(new impl.Chunker(2))
       .toMat(TestSink.probe[ByteString])(Keep.both)
       .run()
 
@@ -37,7 +40,7 @@ class ChunkerSpec(_system: ActorSystem)
     val bytes = ByteString(1, 2, 3, 4, 5, 6, 7)
     val (pub, sub) = TestSource
       .probe[ByteString]
-      .via(new Chunker(2))
+      .via(new impl.Chunker(2))
       .toMat(TestSink.probe[ByteString])(Keep.both)
       .run()
 
@@ -55,7 +58,7 @@ class ChunkerSpec(_system: ActorSystem)
   it should "resize smaller chunks into larger ones" in {
     val (pub, sub) = TestSource
       .probe[ByteString]
-      .via(new Chunker(2))
+      .via(new impl.Chunker(2))
       .toMat(TestSink.probe[ByteString])(Keep.both)
       .run()
 
@@ -79,7 +82,7 @@ class ChunkerSpec(_system: ActorSystem)
   it should "send bytes on complete" in {
     val (pub, sub) = TestSource
       .probe[ByteString]
-      .via(new Chunker(10))
+      .via(new impl.Chunker(10))
       .toMat(TestSink.probe[ByteString])(Keep.both)
       .run()
 
@@ -96,7 +99,7 @@ class ChunkerSpec(_system: ActorSystem)
     sub.expectComplete()
   }
 
-  override def afterAll {
+  override def afterAll() = {
     TestKit.shutdownActorSystem(system)
   }
 

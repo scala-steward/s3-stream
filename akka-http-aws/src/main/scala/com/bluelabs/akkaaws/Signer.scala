@@ -74,7 +74,7 @@ object Signer {
       .hexEncodedSignature(stringToSign(algorithm, key, requestDate, canonicalRequest).getBytes())}"
   }
 
-  private def stringToSign(
+  private[akkaaws] def stringToSign(
       algorithm: String,
       signingKey: impl.SigningKey,
       requestDate: ZonedDateTime,

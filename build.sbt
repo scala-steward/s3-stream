@@ -1,6 +1,6 @@
 val akkaVersion = "2.6.4"
 val akkaHttpVersion = "10.1.11"
-val scalatestVersion = "3.0.0"
+val scalatestVersion = "3.2.5"
 val akka = "com.typesafe.akka" %% "akka-actor" % akkaVersion
 val akkaStream = "com.typesafe.akka" %% "akka-stream" % akkaVersion
 val akkaHttp = "com.typesafe.akka" %% "akka-http" % akkaHttpVersion
@@ -14,13 +14,12 @@ val scalatest = "org.scalatest" %% "scalatest" % scalatestVersion
 
 lazy val commonSettings = Seq(
   organization := "io.github.pityka",
-  version := "0.0.5-SNAPSHOT",
-  scalaVersion := "2.12.11",
+  version := "0.0.5",
+  scalaVersion := "2.13.5",
   scalacOptions ++= Seq(
     "-unchecked",
     "-deprecation",
     "-feature",
-    "-Ywarn-unused-import",
     "-Xlint",
     "-encoding",
     "UTF-8",
@@ -45,8 +44,6 @@ lazy val commonSettings = Seq(
       </developers>
   }
 )
-
-scalafmtOnCompile in ThisBuild := true
 
 lazy val root = (project in file("."))
   .settings(commonSettings: _*)
@@ -74,7 +71,7 @@ lazy val s3stream = (project in file("s3-stream"))
       akkaStream,
       akkaHttp,
       akkaHttpXML,
-      "org.scalaj" %% "scalaj-http" % "2.3.0",
+      "org.scalaj" %% "scalaj-http" % "2.4.2",
       akkaTestkit % Test,
       akkaStreamTestkit % Test,
       scalatest % Test

@@ -9,7 +9,8 @@ import akka.testkit.TestKit
 import akka.util.ByteString
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.time.{Millis, Seconds, Span}
-import org.scalatest.{FlatSpecLike, Matchers}
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.flatspec.{AnyFlatSpecLike => FlatSpecLike}
 
 import scala.concurrent.Future
 
@@ -20,6 +21,7 @@ class StreamUtilsSpec(_system: ActorSystem)
     with ScalaFutures {
   def this() = this(ActorSystem("StreamUtilsSpec"))
 
+  @scala.annotation.nowarn
   implicit val materializer = ActorMaterializer(
     ActorMaterializerSettings(system).withDebugLogging(true)
   )
@@ -30,7 +32,7 @@ class StreamUtilsSpec(_system: ActorSystem)
   "digest" should "calculate the digest of a short string" in {
     val bytes: Array[Byte] = "abcdefghijklmnopqrstuvwxyz".getBytes()
     val flow: Future[ByteString] =
-      Source.single(ByteString(bytes)).runWith(StreamUtils.digest())
+      Source.single(ByteString(bytes)).runWith(impl.StreamUtils.digest())
 
     val testDigest = MessageDigest.getInstance("SHA-256").digest(bytes)
     whenReady(flow) { result =>
@@ -42,7 +44,7 @@ class StreamUtilsSpec(_system: ActorSystem)
     val input = StreamConverters.fromInputStream(() =>
       getClass.getResourceAsStream("/testdata.txt")
     )
-    val flow: Future[ByteString] = input.runWith(StreamUtils.digest())
+    val flow: Future[ByteString] = input.runWith(impl.StreamUtils.digest())
 
     val testDigest = MessageDigest.getInstance("SHA-256")
     val dis: DigestInputStream =

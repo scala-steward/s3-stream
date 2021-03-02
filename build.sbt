@@ -1,5 +1,5 @@
-val akkaVersion = "2.6.4"
-val akkaHttpVersion = "10.1.11"
+val akkaVersion = "2.6.13"
+val akkaHttpVersion = "10.2.4"
 val scalatestVersion = "3.2.5"
 val akka = "com.typesafe.akka" %% "akka-actor" % akkaVersion
 val akkaStream = "com.typesafe.akka" %% "akka-stream" % akkaVersion
@@ -14,7 +14,7 @@ val scalatest = "org.scalatest" %% "scalatest" % scalatestVersion
 
 lazy val commonSettings = Seq(
   organization := "io.github.pityka",
-  version := "0.0.5",
+  version := "0.0.6",
   scalaVersion := "2.13.5",
   scalacOptions ++= Seq(
     "-unchecked",

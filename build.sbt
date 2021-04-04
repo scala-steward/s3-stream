@@ -1,3 +1,21 @@
+inThisBuild(
+  List(
+    organization := "io.github.pityka",
+    homepage := Some(url("https://pityka.github.io/s3-stream/")),
+    licenses := List(
+      ("Apache-2.0", url("https://opensource.org/licenses/Apache-2.0"))
+    ),
+    developers := List(
+      Developer(
+        "pityka",
+        "Istvan Bartha",
+        "bartha.pityu@gmail.com",
+        url("https://github.com/pityka/s3-stream")
+      )
+    )
+  )
+)
+
 val akkaVersion = "2.6.13"
 val akkaHttpVersion = "10.2.4"
 val scalatestVersion = "3.2.5"
@@ -14,40 +32,22 @@ val scalatest = "org.scalatest" %% "scalatest" % scalatestVersion
 
 lazy val commonSettings = Seq(
   organization := "io.github.pityka",
-  version := "0.0.6",
   scalaVersion := "2.13.5",
+  crossScalaVersions := Seq("2.12.13", "2.13.5"),
   scalacOptions ++= Seq(
     "-unchecked",
     "-deprecation",
     "-feature",
-    "-Xlint",
     "-encoding",
     "UTF-8",
     "-Xfatal-warnings",
     "-language:postfixOps"
-  ),
-  licenses += ("Apache-2.0", url("https://opensource.org/licenses/Apache-2.0")),
-  publishTo := sonatypePublishTo.value,
-  pomExtra in Global := {
-    <url>https://pityka.github.io/s3-stream/</url>
-      <scm>
-        <connection>scm:git:github.com/pityka/s3-stream</connection>
-        <developerConnection>scm:git:git@github.com:pityka/s3-stream</developerConnection>
-        <url>github.com/pityka/s3-stream</url>
-      </scm>
-      <developers>
-        <developer>
-          <id>pityka</id>
-          <name>Istvan Bartha</name>
-          <url>https://pityka.github.io/s3-stream/</url>
-        </developer>
-      </developers>
-  }
+  )
 )
 
 lazy val root = (project in file("."))
   .settings(commonSettings: _*)
-  .settings(publishArtifact := false)
+  .settings(publishArtifact := false, crossScalaVersions := Nil)
   .aggregate(s3stream, awsRequests)
 
 lazy val awsRequests = (project in file("akka-http-aws"))
@@ -55,6 +55,7 @@ lazy val awsRequests = (project in file("akka-http-aws"))
   .settings(
     name := "akka-http-aws-fork",
     libraryDependencies ++= Seq(
+      "org.scala-lang.modules" %% "scala-collection-compat" % "2.4.3",
       akkaHttp,
       akkaStream,
       akkaHttpSprayJson,

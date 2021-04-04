@@ -11,6 +11,7 @@ import akka.http.scaladsl.model.{HttpRequest, HttpResponse, ResponseEntity}
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.http.scaladsl.unmarshalling.Unmarshaller
 import akka.stream.scaladsl.Source
+import scala.collection.compat._
 
 private[s3stream] trait SignAndGet {
 
@@ -58,7 +59,7 @@ private[s3stream] trait SignAndGet {
   protected def makeCounterSource[T](f: Future[T]): Source[(T, Int), NotUsed] =
     Source
       .future(f)
-      .mapConcat { case r => LazyList.continually(r) }
+      .mapConcat { case r => immutable.LazyList.continually(r) }
       .zip(StreamUtils.counter(1))
 
 }

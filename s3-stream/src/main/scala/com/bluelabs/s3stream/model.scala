@@ -12,7 +12,7 @@ case class ObjectMetadata(response: HttpResponse) {
 }
 
 trait S3RequestMethod {
-  def headers: Seq[HttpHeader]
+  def headers: collection.immutable.Seq[HttpHeader]
   def method: HttpMethod
 }
 

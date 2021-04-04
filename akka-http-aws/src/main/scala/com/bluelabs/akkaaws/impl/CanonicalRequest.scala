@@ -2,6 +2,7 @@ package com.bluelabs.akkaaws.impl
 
 import akka.http.scaladsl.model.Uri.Query
 import akka.http.scaladsl.model.{HttpHeader, HttpRequest}
+import scala.collection.compat._
 
 // Documentation: http://docs.aws.amazon.com/general/latest/gr/sigv4-create-canonical-request.html
 private[akkaaws] case class CanonicalRequest(

@@ -28,16 +28,15 @@ private[s3stream] trait ParallelDownloadSupport
             (s, min(contentLength, s + partSize))
           )
           intervals
-            .map {
-              case (startIdx, openEndIdx) =>
-                () =>
-                  retryFuture(
-                    getDataOnce(
-                      s3Location,
-                      params.range(headers.ByteRange(startIdx, openEndIdx - 1))
-                    ).runFold(ByteString())(_ ++ _),
-                    3
-                  )
+            .map { case (startIdx, openEndIdx) =>
+              () =>
+                retryFuture(
+                  getDataOnce(
+                    s3Location,
+                    params.range(headers.ByteRange(startIdx, openEndIdx - 1))
+                  ).runFold(ByteString())(_ ++ _),
+                  3
+                )
             }
       }
 

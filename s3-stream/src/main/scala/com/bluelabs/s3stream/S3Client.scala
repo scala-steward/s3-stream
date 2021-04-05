@@ -34,8 +34,8 @@ trait StaticKey {
     )
 }
 
-class S3ClientQueued(val region: String)(
-    implicit val system: ActorSystem
+class S3ClientQueued(val region: String)(implicit
+    val system: ActorSystem
 ) extends S3ClientSupport
     with QueuedRequest
     with DefaultKey

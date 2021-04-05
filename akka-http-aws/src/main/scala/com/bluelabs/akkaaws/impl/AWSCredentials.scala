@@ -13,15 +13,15 @@ import java.util.concurrent.atomic.AtomicReference
 import akka.http.scaladsl.Http
 
 private[akkaaws] trait CredentialProvider {
-  def credentials(
-      implicit as: ActorSystem,
+  def credentials(implicit
+      as: ActorSystem,
       mat: Materializer
   ): Future[AWSCredentials]
 }
 
 private[akkaaws] object CredentialProvider {
-  def default(
-      implicit as: ActorSystem,
+  def default(implicit
+      as: ActorSystem,
       mat: Materializer
   ): Future[CredentialProvider] =
     CredentialImpl.defaultCredentialProviderChain.map {
@@ -31,8 +31,8 @@ private[akkaaws] object CredentialProvider {
 
   def static(accessKeyId: String, secretAccessKey: String) =
     new CredentialProvider {
-      def credentials(
-          implicit as: ActorSystem,
+      def credentials(implicit
+          as: ActorSystem,
           mat: Materializer
       ): Future[AWSCredentials] =
         Future.successful(
@@ -54,8 +54,8 @@ private[akkaaws] object CredentialImpl {
     def accessKeyId: String
     def secretAccessKey: String
 
-    def refresh(
-        implicit as: ActorSystem,
+    def refresh(implicit
+        as: ActorSystem,
         am: Materializer
     ): Future[(AWSCredentialsWithRefresh, Boolean)]
   }
@@ -69,10 +69,9 @@ private[akkaaws] object CredentialImpl {
     }
 
     def credentials(implicit as: ActorSystem, mat: Materializer) =
-      currentCredentials.get.refresh.map {
-        case (credentials, updated) =>
-          if (updated) { this.rotate(credentials) }
-          credentials
+      currentCredentials.get.refresh.map { case (credentials, updated) =>
+        if (updated) { this.rotate(credentials) }
+        credentials
       }(mat.executionContext)
   }
 
@@ -122,8 +121,8 @@ private[akkaaws] object CredentialImpl {
     } else None
   }
 
-  def defaultCredentialProviderChain(
-      implicit as: ActorSystem,
+  def defaultCredentialProviderChain(implicit
+      as: ActorSystem,
       mat: Materializer
   ) = {
 
@@ -134,20 +133,18 @@ private[akkaaws] object CredentialImpl {
         Some(BasicCredentials(access, secret))
       else None
     }.orElse {
-        val access = System.getenv("AWS_ACCESS_KEY")
-        val secret = System.getenv("AWS_SECRET_KEY")
-        if (access != null && secret != null)
-          Some(BasicCredentials(access, secret))
-        else None
-      }
-      .orElse {
-        val access = System.getProperty("aws.accessKeyId")
-        val secret = System.getProperty("aws.secretKey")
-        if (access != null && secret != null)
-          Some(BasicCredentials(access, secret))
-        else None
-      }
-      .orElse(parseAWSCredentialsFile)
+      val access = System.getenv("AWS_ACCESS_KEY")
+      val secret = System.getenv("AWS_SECRET_KEY")
+      if (access != null && secret != null)
+        Some(BasicCredentials(access, secret))
+      else None
+    }.orElse {
+      val access = System.getProperty("aws.accessKeyId")
+      val secret = System.getProperty("aws.secretKey")
+      if (access != null && secret != null)
+        Some(BasicCredentials(access, secret))
+      else None
+    }.orElse(parseAWSCredentialsFile)
 
     if (opt.isDefined) Future.successful(opt)
     else fetchFromMetadata
@@ -204,10 +201,9 @@ private[akkaaws] object CredentialImpl {
               )
             )
           }
-      } recover {
-      case e =>
-        log.error(e, "metadata fetch fail")
-        None
+      } recover { case e =>
+      log.error(e, "metadata fetch fail")
+      None
     }
   }
 

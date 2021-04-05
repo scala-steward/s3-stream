@@ -48,9 +48,8 @@ private[s3stream] trait SignAndGet {
       case HttpResponse(status, _, entity, _) if status.isSuccess() =>
         Future.successful(entity)
       case HttpResponse(status, _, entity, _) => {
-        Unmarshal(entity).to[String].flatMap {
-          case err =>
-            Future.failed(new Exception(err))
+        Unmarshal(entity).to[String].flatMap { case err =>
+          Future.failed(new Exception(err))
         }
       }
       case _ => Future.failed(new RuntimeException())

@@ -47,8 +47,8 @@ class SigningKeyProvider(
     scope: CredentialScope,
     algorithm: String = "HmacSHA256"
 ) {
-  private[akkaaws] def signingKey(
-      implicit as: ActorSystem,
+  private[akkaaws] def signingKey(implicit
+      as: ActorSystem,
       mat: Materializer
   ) = {
     import mat.executionContext

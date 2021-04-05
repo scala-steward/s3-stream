@@ -54,9 +54,8 @@ private[s3stream] trait MultipartUploadHttpRequests
   )(implicit ec: ExecutionContext): Future[HttpRequest] = {
     val payload = <CompleteMultipartUpload>
                     {
-      parts.map {
-        case (partNumber, etag) =>
-          <Part><PartNumber>{partNumber}</PartNumber><ETag>{etag}</ETag></Part>
+      parts.map { case (partNumber, etag) =>
+        <Part><PartNumber>{partNumber}</PartNumber><ETag>{etag}</ETag></Part>
       }
     }
                   </CompleteMultipartUpload>

@@ -16,12 +16,15 @@ private[s3stream] class Chunker(val chunkSize: Int)
     new GraphStageLogic(shape) {
       private var buffer = ByteString.empty
 
-      setHandler(out, new OutHandler {
-        override def onPull(): Unit = {
-          if (isClosed(in) || buffer.size >= chunkSize) emitChunk()
-          else pull(in)
+      setHandler(
+        out,
+        new OutHandler {
+          override def onPull(): Unit = {
+            if (isClosed(in) || buffer.size >= chunkSize) emitChunk()
+            else pull(in)
+          }
         }
-      })
+      )
       setHandler(
         in,
         new InHandler {

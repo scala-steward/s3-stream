@@ -27,18 +27,17 @@ object Signer {
             impl.Utils.encodeHex(hash.toArray)
         }
 
-      hashedBody.map {
-        case hb =>
-          val headersToAdd = Seq(
-            RawHeader("x-amz-date", date.format(dateFormatter)),
-            RawHeader("x-amz-content-sha256", hb)
-          ) ++ sessionHeader(key.credentials)
-          val reqWithHeaders =
-            request.withHeaders(request.headers ++ headersToAdd)
-          val cr = impl.CanonicalRequest.from(reqWithHeaders)
-          val authHeader =
-            authorizationHeader("AWS4-HMAC-SHA256", key, date, cr)
-          reqWithHeaders.withHeaders(reqWithHeaders.headers ++ Seq(authHeader))
+      hashedBody.map { case hb =>
+        val headersToAdd = Seq(
+          RawHeader("x-amz-date", date.format(dateFormatter)),
+          RawHeader("x-amz-content-sha256", hb)
+        ) ++ sessionHeader(key.credentials)
+        val reqWithHeaders =
+          request.withHeaders(request.headers ++ headersToAdd)
+        val cr = impl.CanonicalRequest.from(reqWithHeaders)
+        val authHeader =
+          authorizationHeader("AWS4-HMAC-SHA256", key, date, cr)
+        reqWithHeaders.withHeaders(reqWithHeaders.headers ++ Seq(authHeader))
       }
 
     }

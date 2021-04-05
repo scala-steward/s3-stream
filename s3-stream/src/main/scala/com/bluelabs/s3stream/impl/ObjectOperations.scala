@@ -30,13 +30,12 @@ private[s3stream] trait ObjectOperationsSupport
     NotUsed
   ] =
     Flow[(S3Location, S3RequestMethod)]
-      .mapAsync(1) {
-        case (loc, method) =>
-          signingKey.flatMap(signingKey =>
-            Signer
-              .signedRequest(s3Request(loc, method), signingKey)
-              .map(r => (r, (loc, method)))
-          )
+      .mapAsync(1) { case (loc, method) =>
+        signingKey.flatMap(signingKey =>
+          Signer
+            .signedRequest(s3Request(loc, method), signingKey)
+            .map(r => (r, (loc, method)))
+        )
       }
       .via(Http().superPool[(S3Location, S3RequestMethod)]())
 
@@ -76,14 +75,13 @@ private[s3stream] trait ObjectOperationsSupport
           .asString
         val status = response.code
         val akkaResponseHeaders =
-          response.headers.flatMap {
-            case (name, values) =>
-              values.flatMap { value =>
-                HttpHeader.parse(name, value) match {
-                  case HttpHeader.ParsingResult.Ok(h, _) => List(h)
-                  case _                                 => Nil
-                }
+          response.headers.flatMap { case (name, values) =>
+            values.flatMap { value =>
+              HttpHeader.parse(name, value) match {
+                case HttpHeader.ParsingResult.Ok(h, _) => List(h)
+                case _                                 => Nil
               }
+            }
           }.toList
         ObjectMetadata(
           HttpResponse(status = status, headers = akkaResponseHeaders)
@@ -96,14 +94,13 @@ private[s3stream] trait ObjectOperationsSupport
     NotUsed
   ] =
     Flow[(S3Location, PutObjectRequest, ByteString)]
-      .mapAsync(1) {
-        case (loc, method, payload) =>
-          signingKey
-            .flatMap(signingKey =>
-              Signer
-                .signedRequest(putRequest(loc, method, payload), signingKey)
-            )
-            .map(r => (r, (loc, method)))
+      .mapAsync(1) { case (loc, method, payload) =>
+        signingKey
+          .flatMap(signingKey =>
+            Signer
+              .signedRequest(putRequest(loc, method, payload), signingKey)
+          )
+          .map(r => (r, (loc, method)))
       }
       .via(Http().superPool[(S3Location, S3RequestMethod)]())
 

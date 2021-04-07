@@ -16,7 +16,7 @@ inThisBuild(
   )
 )
 
-val akkaVersion = "2.6.13"
+val akkaVersion = "2.6.14"
 val akkaHttpVersion = "10.2.4"
 val scalatestVersion = "3.2.7"
 val akka = "com.typesafe.akka" %% "akka-actor" % akkaVersion

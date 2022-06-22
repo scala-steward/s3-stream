@@ -58,6 +58,7 @@ lazy val awsRequests = (project in file("akka-http-aws"))
     name := "akka-http-aws-fork",
     libraryDependencies ++= Seq(
       "org.scala-lang.modules" %% "scala-collection-compat" % "2.5.0",
+      "org.scala-lang.modules" %% "scala-xml" % "2.1.0",
       akkaHttp,
       scodec,
       akkaStream,
